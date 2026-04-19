@@ -155,6 +155,7 @@ tr.unusual-row td{background:rgba(239,68,68,.04);}
 #splash.hidden{opacity:0;pointer-events:none;}
 body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
 .splash-btn{background:var(--accent);color:#000;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);}
+.splash-note{font-size:11px;color:var(--muted);font-family:var(--mono);max-width:400px;text-align:center;line-height:1.7;}
 
 /* print */
 @media print{
@@ -221,9 +222,80 @@ body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
 <div id="splash">
   <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" rx="18" fill="#1a2550"/><text x="48" y="57" font-family="Arial Black,Arial,sans-serif" font-size="34" font-weight="900" fill="white" text-anchor="middle">CTS</text><circle cx="10" cy="32" r="5" fill="none" stroke="#6abf4b" stroke-width="3.5"/></svg>
   <div style="font-size:20px;font-weight:600;">CTS Rulez — Energy Eye Live Dashboard</div>
+  <div style="font-size:12px;color:var(--muted);font-family:var(--mono);">device: energy-test-001 · TNB Tariff July 2025 · MYT</div>
   <button class="splash-btn" onclick="pickFile()">Select teraterm.log</button>
+  <button onclick="showHelp()" style="background:transparent;color:#60a5fa;border:1px solid rgba(59,130,246,.4);border-radius:8px;padding:8px 28px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);">? How to use</button>
+  <div class="splash-note">Includes TNB General & ToU tariff comparison. Peak hours: 14:00–22:00 weekdays. You can set the pulse rate after loading.</div>
 </div>
 
+<!-- pulse rate modal -->
+<div id="pulseModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);align-items:flex-start;justify-content:center;overflow-y:auto;padding:16px 12px;">
+  <div style="background:var(--surface);border:1px solid rgba(0,212,170,.4);border-radius:12px;padding:20px 22px;max-width:460px;width:100%;margin:auto;box-shadow:0 0 40px rgba(0,212,170,.12);">
+
+    <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;">⚡ Setup — Energy Eye</div>
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:16px;">Complete before loading data.</div>
+
+    <!-- SECTION 1: Pulse Rate -->
+    <div style="font-size:10px;font-weight:600;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">1 · Pulse Rate</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;">
+      <label class="pr-modal-lbl" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid rgba(0,212,170,.4);background:rgba(0,212,170,.08);">
+        <input type="radio" name="modalPulse" value="1000" checked style="accent-color:var(--accent);width:13px;height:13px;">
+        <div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--accent);">1000 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 1 Wh</div></div>
+      </label>
+      <label class="pr-modal-lbl" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);">
+        <input type="radio" name="modalPulse" value="500" style="accent-color:var(--accent);width:13px;height:13px;">
+        <div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">500 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 2 Wh</div></div>
+      </label>
+      <label class="pr-modal-lbl" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);">
+        <input type="radio" name="modalPulse" value="250" style="accent-color:var(--accent);width:13px;height:13px;">
+        <div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">250 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 4 Wh</div></div>
+      </label>
+      <label class="pr-modal-lbl" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);">
+        <input type="radio" name="modalPulse" value="100" style="accent-color:var(--accent);width:13px;height:13px;">
+        <div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">100 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 10 Wh</div></div>
+      </label>
+      <label class="pr-modal-lbl" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);grid-column:span 2;">
+        <input type="radio" name="modalPulse" value="custom" style="accent-color:var(--accent);width:13px;height:13px;" onchange="document.getElementById('modalCustomWrap').style.display='flex'">
+        <div style="flex:1;display:flex;align-items:center;gap:8px;">
+          <div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">Custom</div>
+          <div id="modalCustomWrap" style="display:none;align-items:center;gap:6px;">
+            <input id="modalCustomVal" type="number" min="1" placeholder="e.g. 800" style="width:90px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:3px 7px;font-size:11px;font-family:var(--mono);">
+            <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">pulses/kWh</span>
+          </div>
+        </div>
+      </label>
+    </div>
+
+    <!-- SECTION 2: Customer Info -->
+    <div style="font-size:10px;font-weight:600;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">2 · Customer / Site Info</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px;">
+      <div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">Customer Name</div>
+        <input id="setupCustomerName" type="text" placeholder="e.g. Ahmad bin Ali" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--sans);">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">TNB Account No.</div>
+        <input id="setupAccNo" type="text" placeholder="e.g. 7100012345678" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--mono);">
+      </div>
+      <div style="grid-column:span 2;">
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">Site Address</div>
+        <textarea id="setupAddress" rows="2" placeholder="e.g. No. 12, Jalan Maju, 55100 Kuala Lumpur" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--sans);resize:none;"></textarea>
+      </div>
+    </div>
+
+    <!-- SECTION 3: GPS -->
+    <div style="font-size:10px;font-weight:600;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">3 · GPS Location <span style="color:var(--muted);font-weight:400;">(optional)</span></div>
+    <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+      <input id="setupLat" type="text" placeholder="Lat e.g. 3.1390" style="flex:1;min-width:100px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--mono);">
+      <input id="setupLng" type="text" placeholder="Lng e.g. 101.6869" style="flex:1;min-width:100px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--mono);">
+      <button onclick="getGPS()" style="background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);border-radius:5px;padding:5px 10px;font-size:10px;font-family:var(--mono);cursor:pointer;white-space:nowrap;">📍 Find Me</button>
+    </div>
+    <div id="gpsStatus" style="font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:14px;min-height:13px;"></div>
+
+    <button onclick="confirmModalPulse()" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:7px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);">Confirm &amp; Load Data</button>
+    <div style="text-align:center;margin-top:8px;font-size:10px;color:var(--muted);font-family:var(--mono);">Pulse rate can be changed anytime from the status bar.</div>
+  </div>
+</div>
 
 <div class="wrap">
   <header>
@@ -231,86 +303,95 @@ body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
       <div class="logo-icon"><svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="36" height="36" rx="8" fill="#1a2550"/><text x="22" y="27" font-family="Arial Black,Arial,sans-serif" font-size="15" font-weight="900" fill="white" text-anchor="middle">CTS</text><circle cx="5" cy="14" r="2.2" fill="none" stroke="#6abf4b" stroke-width="1.8"/></svg></div>
       <div>
         <div class="logo-text">CTS Rulez — Energy Eye Live</div>
-        <div class="logo-sub" id="logoSub">energy-test · energyintervention@gmail.com · ©2026</div>
+        <div class="logo-sub" id="logoSub">energy-test-001 · 1 pulse = 1 Wh · TNB tariff July 2025</div>
       </div>
     </div>
     <div class="hdr-right">
+      <div id="dsp-fab" style="font-family:var(--mono);position:relative;">
+
+  <button id="dsp-fab-btn" onclick="dspToggle()" style="background:#1a2535;border:1px solid #2d4060;border-radius:8px;padding:0 14px;color:#9ca3af;font-size:11px;font-family:var(--mono);cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 2px 12px rgba(0,0,0,.5);height:32px;white-space:nowrap;">
+    <span id="dsp-fab-dot" style="width:7px;height:7px;border-radius:50%;background:#00d4aa;display:inline-block;animation:blink 1.4s ease-in-out infinite;flex-shrink:0;"></span>
+    <span>Device Status</span>
+    <span id="dsp-fab-arrow" style="font-size:10px;">▲</span>
+  </button>
+
+  <div id="dsp-panel" style="display:none;position:fixed;top:0;right:0;width:320px;height:100vh;background:#111720;border-left:1px solid #1e2a38;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.6);z-index:9999;">
+
+    <div style="background:#0d1117;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e2a38;">
+      <span style="color:#e2e8f0;font-size:11px;letter-spacing:.06em;">DEVICE STATUS</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span id="dsp-updated" style="color:#5a6a7e;font-size:10px;">—</span>
+        <button id="dsp-pause-btn" onclick="dspPause()" style="background:#1e2a38;border:1px solid #2d3f50;border-radius:5px;padding:2px 9px;color:#9ca3af;font-size:10px;font-family:var(--mono);cursor:pointer;">⏸ Pause</button>
+        <button onclick="dspToggle()" style="background:#1e2a38;border:1px solid #2d3f50;border-radius:5px;padding:2px 9px;color:#9ca3af;font-size:10px;font-family:var(--mono);cursor:pointer;">✕</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px 12px;border-bottom:1px solid #1e2a38;">
+      <div style="background:#0d1117;border-radius:6px;padding:6px 8px;"><div style="color:#5a6a7e;font-size:9px;letter-spacing:.05em;margin-bottom:3px;">MODEM</div><div id="dsp-modem" style="color:#5a6a7e;font-size:11px;">—</div></div>
+      <div style="background:#0d1117;border-radius:6px;padding:6px 8px;"><div style="color:#5a6a7e;font-size:9px;letter-spacing:.05em;margin-bottom:3px;">SIM</div><div id="dsp-sim" style="color:#5a6a7e;font-size:11px;">—</div></div>
+      <div style="background:#0d1117;border-radius:6px;padding:6px 8px;"><div style="color:#5a6a7e;font-size:9px;letter-spacing:.05em;margin-bottom:3px;">LAST TX</div><div id="dsp-tx" style="color:#5a6a7e;font-size:11px;">—</div></div>
+      <div style="background:#0d1117;border-radius:6px;padding:6px 8px;"><div style="color:#5a6a7e;font-size:9px;letter-spacing:.05em;margin-bottom:3px;">BATTERY</div><div id="dsp-batt" style="color:#5a6a7e;font-size:11px;">—</div></div>
+      <div style="background:#0d1117;border-radius:6px;padding:6px 8px;"><div style="color:#5a6a7e;font-size:9px;letter-spacing:.05em;margin-bottom:3px;">CLOCK SYNC</div><div id="dsp-cclk" style="color:#5a6a7e;font-size:11px;">—</div></div>
+      <div style="background:#0d1117;border-radius:6px;padding:6px 8px;"><div style="color:#5a6a7e;font-size:9px;letter-spacing:.05em;margin-bottom:3px;">TX CYCLES</div><div id="dsp-cycles" style="color:#5a6a7e;font-size:11px;">—</div></div>
+    </div>
+
+    <div style="padding:8px 12px;">
+      <div style="color:#5a6a7e;font-size:9px;letter-spacing:.06em;margin-bottom:6px;">RECENT EVENTS</div>
+      <div id="dsp-events" style="display:flex;flex-direction:column;gap:2px;"></div>
+    </div>
+
+    <div id="dsp-paused-banner" style="display:none;background:rgba(245,158,11,.1);border-top:1px solid rgba(245,158,11,.2);padding:6px 12px;color:#f59e0b;font-size:10px;text-align:center;">⏸ Updates paused — click Resume to restart</div>
+  </div>
+</div>
       <select class="sel" id="intervalSel" onchange="changeInterval()">
         <option value="3000">Refresh: 3s</option>
         <option value="5000">Refresh: 5s</option>
         <option value="10000">Refresh: 10s</option>
         <option value="30000">Refresh: 30s</option>
       </select>
-      <button id="stopResumeBtn" class="btn-ghost" onclick="togglePolling()" style="border-color:rgba(239,68,68,.4);color:#f87171;">&#9209; Stop</button>
+      <button id="stopResumeBtn" class="btn-ghost" onclick="togglePolling()" style="border-color:rgba(239,68,68,.4);color:#f87171;">⏹ Stop</button>
       <div class="live-badge"><div class="live-dot off" id="liveDot"></div><span id="liveLabel">WAITING</span></div>
       <button class="btn-ghost" onclick="savePDF()" title="Save as PDF">🖨</button>
+      <button class="btn-ghost" onclick="showHelp()" style="border-color:rgba(59,130,246,.4);color:#60a5fa;">? Help</button>
       <button class="btn" onclick="pickFile()">Change file</button>
     </div>
   </header>
 
-  <!-- INLINE SETUP PANEL -->
-  <div id="setupPanel" style="background:var(--surface);border:1px solid rgba(0,212,170,.3);border-radius:10px;padding:16px 18px;margin-bottom:12px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
-      <div style="font-size:13px;font-weight:600;color:var(--text);">&#9889; Setup</div>
-      <button onclick="toggleSetupPanel()" id="setupCollapseBtn" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:3px 12px;font-size:11px;font-family:var(--mono);cursor:pointer;">&#9650; Collapse</button>
-    </div>
-    <div id="setupBody">
-      <div style="font-size:10px;font-weight:600;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">1 &middot; Pulse Rate</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px;">
-        <label id="pr-lbl-1000" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid rgba(0,212,170,.4);background:rgba(0,212,170,.08);"><input type="radio" name="setupPulse" value="1000" checked style="accent-color:var(--accent);"><div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--accent);">1000 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 1 Wh</div></div></label>
-        <label id="pr-lbl-500" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);"><input type="radio" name="setupPulse" value="500" style="accent-color:var(--accent);"><div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">500 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 2 Wh</div></div></label>
-        <label id="pr-lbl-250" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);"><input type="radio" name="setupPulse" value="250" style="accent-color:var(--accent);"><div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">250 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 4 Wh</div></div></label>
-        <label id="pr-lbl-100" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);"><input type="radio" name="setupPulse" value="100" style="accent-color:var(--accent);"><div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">100 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 10 Wh</div></div></label>
-      </div>
-      <div style="font-size:10px;font-weight:600;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">2 &middot; Customer / Site Info</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;">
-        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">Customer Name</div><input id="setupCustomerName" type="text" placeholder="e.g. Ahmad bin Ali" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--sans);"></div>
-        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">TNB Account No.</div><input id="setupAccNo" type="text" placeholder="e.g. 7100012345678" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--mono);"></div>
-        <div style="grid-column:span 2;"><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">Site Address</div><input id="setupAddress" type="text" placeholder="e.g. No. 12, Jalan Maju, 55100 KL" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--sans);"></div>
-      </div>
-      <button onclick="applySetup()" style="background:var(--accent);color:#000;border:none;border-radius:7px;padding:8px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);">&#10003; Apply</button>
-      <span id="setupApplied" style="font-size:11px;color:var(--success);font-family:var(--mono);margin-left:10px;display:none;">&#10003; Saved</span>
-    </div>
-  </div>
-  <!-- site info summary -->
+  <!-- site info card -->
   <div id="siteInfoCard" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px;margin-bottom:12px;">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div style="display:flex;gap:24px;flex-wrap:wrap;flex:1;">
-        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Customer</div><div id="cardName" style="font-size:13px;font-weight:600;color:var(--text);">&#8212;</div></div>
-        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Address</div><div id="cardAddress" style="font-size:12px;color:var(--text);max-width:300px;line-height:1.4;">&#8212;</div></div>
-        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">TNB Acc No.</div><div id="cardAccNo" style="font-size:12px;font-family:var(--mono);color:var(--accent);">&#8212;</div></div>
-        <div id="cardGpsWrap" style="display:none;"><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">GPS</div><a id="cardGps" href="#" target="_blank" style="font-size:11px;font-family:var(--mono);color:#60a5fa;text-decoration:none;">&#8212;</a></div>
-        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Pulse Rate</div><div id="cardPulse" style="font-size:12px;font-family:var(--mono);color:var(--accent);">&#8212;</div></div>
-        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Device</div>
-          <div id="cardDeviceStatus" onclick="cardDeviceClick()" style="margin-top:2px;cursor:pointer;">
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Customer</div>
+          <div id="cardName" style="font-size:13px;font-weight:600;color:var(--text);">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Address</div>
+          <div id="cardAddress" style="font-size:12px;color:var(--text);max-width:300px;line-height:1.4;">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">TNB Acc No.</div>
+          <div id="cardAccNo" style="font-size:12px;font-family:var(--mono);color:var(--accent);">—</div>
+        </div>
+        <div id="cardGpsWrap" style="display:none;">
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">GPS</div>
+          <a id="cardGps" href="#" target="_blank" style="font-size:11px;font-family:var(--mono);color:#60a5fa;text-decoration:none;">—</a>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Pulse Rate</div>
+          <div id="cardPulse" style="font-size:12px;font-family:var(--mono);color:var(--accent);">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Device</div>
+          <div id="cardDeviceStatus" onclick="cardDeviceClick()" style="margin-top:2px;cursor:default;">
             <span id="cardDevicePill" style="display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:3px 9px;font-size:11px;font-family:var(--mono);background:rgba(90,106,126,.15);color:#5a6a7e;border:1px solid rgba(90,106,126,.2);">
               <span id="cardDeviceDot" style="width:7px;height:7px;border-radius:50%;background:#5a6a7e;display:inline-block;"></span>
-              <span id="cardDeviceLabel">&#8212;</span>
+              <span id="cardDeviceLabel">—</span>
             </span>
           </div>
         </div>
       </div>
-      <button onclick="toggleSetupPanel()" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;font-size:10px;font-family:var(--mono);cursor:pointer;white-space:nowrap;">&#9999; Edit</button>
-    </div>
-  </div>
-  <!-- DEVICE STATUS inline card -->
-  <div id="deviceStatusCard" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;">
-    <div style="background:var(--surface2);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
-      <span style="font-size:11px;font-family:var(--mono);color:var(--text);font-weight:600;letter-spacing:.05em;">DEVICE STATUS</span>
-      <span id="dsp-updated" style="color:var(--muted);font-size:10px;font-family:var(--mono);">&#8212;</span>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);">
-      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">MODEM</div><div id="dsp-modem" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
-      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">SIM</div><div id="dsp-sim" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
-      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">LAST TX</div><div id="dsp-tx" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
-      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">BATTERY</div><div id="dsp-batt" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
-      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">CLOCK SYNC</div><div id="dsp-cclk" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
-      <div style="padding:8px 12px;"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">TX CYCLES</div><div id="dsp-cycles" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
-    </div>
-    <div style="padding:10px 14px;">
-      <div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">RECENT EVENTS</div>
-      <div id="dsp-events" style="display:flex;flex-direction:column;gap:2px;max-height:180px;overflow-y:auto;"></div>
-      <div id="dsp-no-events" style="color:var(--muted);font-size:10px;font-family:var(--mono);padding:4px 0;">Load a log file to see device events.</div>
+      <button onclick="showPulseModal(()=>{})" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;font-size:10px;font-family:var(--mono);cursor:pointer;white-space:nowrap;">✏ Edit</button>
     </div>
   </div>
 
@@ -332,6 +413,136 @@ body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
       <span id="pulseRateLabel" style="color:var(--accent);font-weight:500;">1 pulse = 1 Wh</span>
     </span><span class="sep">|</span>
     <span id="fileStatus">No file selected</span>
+  </div>
+
+  <!-- time filter -->
+  <div class="tfilter" style="flex-direction:column;align-items:flex-start;gap:8px;">
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span class="tfilter-label">View:</span>
+      <button class="tf-btn active" id="tf-all" onclick="setTimeFilter('all',this)">All</button>
+      <button class="tf-btn" onclick="setTimeFilter(15,this)">15 min</button>
+      <button class="tf-btn" onclick="setTimeFilter(120,this)">1 hour</button>
+      <button class="tf-btn" onclick="setTimeFilterToday(this)">1 day</button>
+      <button class="tf-btn" onclick="setTimeFilter(10080,this)">1 week</button>
+      <button class="tf-btn" onclick="setTimeFilter(43200,this)">1 month</button>
+      <button class="tf-btn" onclick="setTimeFilter(525600,this)">1 year</button>
+      <button class="tf-btn" id="tf-range-btn" onclick="toggleRangePicker(this)">📅 Range</button>
+      <div class="peak-badge">⚡ TNB ToU Peak: Mon–Fri 14:00–22:00</div>
+    </div>
+    <!-- date range picker — shown when Range button clicked -->
+    <div id="rangePicker" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;width:100%;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+        <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">From:</span>
+        <input type="date" id="rangeFrom" style="background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:3px 8px;font-size:11px;font-family:var(--mono);">
+        <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">To:</span>
+        <input type="date" id="rangeTo" style="background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:3px 8px;font-size:11px;font-family:var(--mono);">
+        <button onclick="applyRangeFilter()" style="background:rgba(0,212,170,.15);color:#00d4aa;border:1px solid rgba(0,212,170,.4);border-radius:5px;padding:4px 14px;font-size:11px;font-family:var(--mono);cursor:pointer;font-weight:600;">Apply</button>
+        <button onclick="resetRangeFilter()" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:5px;padding:3px 10px;font-size:10px;font-family:var(--mono);cursor:pointer;">✕ Reset</button>
+        <span id="rangeLabel" style="font-size:10px;color:var(--accent);font-family:var(--mono);"></span>
+      </div>
+      <!-- range slider -->
+      
+    </div>
+  </div>
+
+  <!-- main metrics -->
+  <div class="metrics">
+    <div class="mc"><div class="mc-label">Total Energy</div><div class="mc-val teal" id="s-kwh">—</div><div class="mc-sub" id="s-kwh-sub">kWh</div></div>
+    <div class="mc"><div class="mc-label">Total Pulses</div><div class="mc-val teal" id="s-total">—</div><div class="mc-sub" id="s-total-sub">—</div></div>
+    <div class="mc"><div class="mc-label">Avg kWh</div><div class="mc-val blue" id="s-avg-kwh">—</div><div class="mc-sub" id="s-avg-kwh-sub">—</div></div>
+    <div class="mc"><div class="mc-label">Peak Hours (14–22)</div><div class="mc-val amber" id="s-peak-wh">—</div><div class="mc-sub" id="s-peak-wh-sub">Wh</div></div>
+    <div class="mc"><div class="mc-label">Off-Peak Hours</div><div class="mc-val blue" id="s-offpeak-wh">—</div><div class="mc-sub">Wh</div></div>
+    <div class="mc"><div class="mc-label">Max Pulse/Bucket</div><div class="mc-val amber" id="s-maxpulse">—</div><div class="mc-sub" id="s-maxpulse-sub">—</div></div>
+    <div class="mc unusual"><div class="mc-label">⚠ Unusual</div><div class="mc-val red" id="s-unusual">—</div><div class="mc-sub" id="s-unusual-sub">—</div></div>
+  </div>
+
+  <!-- kWh stacked chart by day -->
+  <div class="energy-chart-card" style="margin-bottom:12px;">
+    <div class="card-title">
+      <span>kWh per Day — Peak vs Off-Peak</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#f59e0b;"></span>Peak</span>
+          <span><span class="leg-dot" style="background:#00d4aa;"></span>Off-Peak</span>
+        </div>
+        <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">scroll · drag</span>
+        <button id="kwhStackReset" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:5px;padding:2px 9px;font-size:10px;font-family:var(--mono);cursor:pointer;">Reset</button>
+      </div>
+    </div>
+    <div style="position:relative;height:180px;"><canvas id="kwhStackChart"></canvas></div>
+  </div>
+
+  <!-- TNB Malaysia Tariff Calculator -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;">
+
+    <!-- header row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);">🇲🇾 TNB Malaysia — Tariff Calculator</div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;">Effective 1 Jul 2025 · RP4 · Peninsular Malaysia</div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);font-family:var(--mono);">AFA: RM0.00 (Jul 2025) · RE Fund 1.6% (>300kWh) · SST 8% (>600kWh)</div>
+    </div>
+
+    <!-- selectors row -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;align-items:center;">
+      <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">Tariff type:</span>
+      <button class="tf-btn active" id="tr-A"  onclick="selectTariff('A',this)">Tariff A · Domestic</button>
+      <button class="tf-btn"        id="tr-BD" onclick="selectTariff('BD',this)">Tariff B/D · Comm LV</button>
+      <button class="tf-btn"        id="tr-C1" onclick="selectTariff('C1',this)">Tariff C1 · Comm MV</button>
+      <button class="tf-btn"        id="tr-C2" onclick="selectTariff('C2',this)">Tariff C2 · Ind MV</button>
+      <button class="tf-btn"        id="tr-E1" onclick="selectTariff('E1',this)">Tariff E1 · Ind HV Peak</button>
+      <button class="tf-btn"        id="tr-E2" onclick="selectTariff('E2',this)">Tariff E2 · Ind HV Off-Peak</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+      <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">Phase:</span>
+      <button class="tf-btn active" id="ph-1"  onclick="selectPhase('1',this)">1-Phase 230V</button>
+      <button class="tf-btn"        id="ph-3"  onclick="selectPhase('3',this)">3-Phase 415V</button>
+    </div>
+
+    <!-- tariff info + cost calc side by side -->
+    <div id="tariffGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+      <!-- left: tariff rate card -->
+      <div style="background:var(--surface2);border-radius:8px;padding:14px;border:1px solid var(--border);" id="tariffInfoCard">
+        <!-- filled by JS -->
+      </div>
+
+      <!-- right: cost estimate from log data -->
+      <div style="background:var(--surface2);border-radius:8px;padding:14px;border:1px solid var(--border);">
+        <div style="font-size:11px;font-weight:500;color:var(--text);margin-bottom:10px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;">💰 Estimated cost from log data</div>
+        <div id="costGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+          <div class="tg-item"><div class="tg-label">Energy used (view)</div><div class="tg-val teal" id="tc-kwh">—</div><div class="tg-sub">kWh</div></div>
+          <div class="tg-item"><div class="tg-label">Peak energy</div><div class="tg-val amber" id="tc-peak-kwh">—</div><div class="tg-sub">kWh (14:00–22:00 weekdays)</div></div>
+          <div class="tg-item"><div class="tg-label">General tariff cost</div><div class="tg-val green" id="tc-gen-cost">—</div><div class="tg-sub" id="tc-gen-rate">RM</div></div>
+          <div class="tg-item"><div class="tg-label">ToU tariff cost</div><div class="tg-val teal" id="tc-tou-cost">—</div><div class="tg-sub" id="tc-tou-rate">RM (peak/off split)</div></div>
+        </div>
+        <div id="tc-saving-banner" style="font-size:11px;font-family:var(--mono);padding:8px 10px;border-radius:6px;background:rgba(16,185,129,.08);color:var(--success);border:1px solid rgba(16,185,129,.2);">Select tariff type to calculate cost</div>
+        <div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:var(--mono);" id="tc-note">Note: Estimates exclude AFA, RE Fund, SST and retail charge. Based on log data energy only.</div>
+      </div>
+    </div>
+
+    <!-- ToU saving banner -->
+    <div id="touSavingBanner" style="margin-top:10px;display:none;"></div>
+  </div>
+
+  <!-- Summary section -->
+  <div class="summary-section">
+    <div style="font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">Energy &amp; Cost Summary</div>
+    <div class="summary-tabs">
+      <button class="sum-btn" onclick="setSummaryPeriod('15min',this)">15 min</button>
+      <button class="sum-btn" onclick="setSummaryPeriod('1hour',this)">1 hour</button>
+      <button class="sum-btn" onclick="setSummaryPeriod('1day',this)">1 day</button>
+      <button class="sum-btn" onclick="setSummaryPeriod('1week',this)">1 week</button>
+      <button class="sum-btn active" onclick="setSummaryPeriod('1month',this)">1 month</button>
+      <button class="sum-btn" onclick="setSummaryPeriod('1year',this)">1 year (proj.)</button>
+    </div>
+    <div class="summary-grid" id="summaryGrid">
+      <div class="sg-card"><div class="sg-label">Energy Used</div><div class="sg-val teal" id="sum-kwh">—</div><div class="sg-sub" id="sum-wh">—</div></div>
+      <div class="sg-card"><div class="sg-label">General Tariff Cost</div><div class="sg-val green" id="sum-gen">—</div><div class="sg-sub">RM · non-ToU</div></div>
+      <div class="sg-card"><div class="sg-label">ToU Tariff Cost</div><div class="sg-val teal" id="sum-tou">—</div><div class="sg-sub">RM · actual peak/off split</div></div>
+      <div class="sg-card"><div class="sg-label">ToU Saving</div><div class="sg-val" id="sum-save" style="color:var(--success)">—</div><div class="sg-sub" id="sum-save-sub">vs General Tariff</div></div>
+    </div>
   </div>
 
   <!-- unusual alert — last 15 min, peak only, max 5 rows -->
@@ -368,6 +579,25 @@ body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
     </div>
   </div>
 
+  <!-- energy chart -->
+  <div class="energy-chart-card">
+    <div class="card-title">
+      <span>Energy (Wh) over time</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="legend">
+          <span><span class="leg-dot" style="background:#00d4aa;"></span>Off-peak</span>
+          <span><span class="leg-dot" style="background:#f59e0b;"></span>Peak (14–22)</span>
+          <span><span class="leg-dot" style="background:#ef4444;border-radius:0;"></span>Unusual</span>
+          <span><span style="display:inline-block;width:14px;height:2px;background:#f59e0b;border-radius:1px;vertical-align:middle;margin-right:3px;"></span>Rolling avg</span>
+          <span><span style="display:inline-block;width:14px;height:0;border-top:2px dashed #ef4444;vertical-align:middle;margin-right:3px;"></span>Overall avg</span>
+        </div>
+        <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">scroll to zoom · drag to pan</span>
+        <button onclick="if(energyChart){energyChart.resetZoom();}" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:5px;padding:2px 9px;font-size:10px;font-family:var(--mono);cursor:pointer;">Reset</button>
+      </div>
+    </div>
+    <div style="position:relative;height:200px;"><canvas id="energyChart"></canvas></div>
+  </div>
+
   <!-- pulse + HI/LO row -->
   <div class="charts-row">
     <div class="chart-card">
@@ -391,11 +621,11 @@ body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
     </div>
   </div>
 
-  <!-- bucket detail -->
-  <div class="table-card" style="margin-top:10px;">
-    <div class="card-title" style="margin-bottom:0;"><span>Bucket Detail &mdash; Date &middot; RTC (MYT) &middot; HI &middot; LO &middot; Pulse &middot; Energy</span></div>
+  <!-- table -->
+  <div class="table-card">
+    <div class="card-title" style="margin-bottom:0;"><span>Bucket detail — Date · RTC (MYT) · Energy · TNB Cost · HI · LO</span></div>
     <div class="tcontrols">
-      <input class="t-input" id="filterInput" type="text" placeholder="Search date, RTC, HI, pulse&hellip;" oninput="applyFilter()">
+      <input class="t-input" id="filterInput" type="text" placeholder="Search date, RTC, HI, pulse…" oninput="applyFilter()">
       <select class="t-sel" id="pulseFilter" onchange="applyFilter()">
         <option value="all">All buckets</option>
         <option value="active">Pulse &gt; 0</option>
@@ -415,8 +645,8 @@ body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
         <thead><tr>
           <th>#</th><th>Date</th><th>RTC (MYT)</th><th>Log TS</th>
           <th>HI</th><th>LO</th><th>hw</th><th>d</th>
-          <th>Pulse</th><th>Wh</th><th>kWh Total</th>
-          <th>Period</th><th>Flag</th><th>Dur</th>
+          <th>Pulse</th><th>Wh</th><th>kWh total</th>
+          <th>Period</th><th>Gen (RM)</th><th>ToU (RM)</th><th>Flag</th><th>Dur</th>
         </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
@@ -428,9 +658,30 @@ body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
   </div>
 </div>
 
-</body>
-</html><script>
+<!-- HELP MODAL -->
+<div id="helpModal" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.75);align-items:flex-start;justify-content:center;overflow-y:auto;padding:16px 12px;">
+  <div style="background:var(--surface);border:1px solid rgba(59,130,246,.35);border-radius:12px;padding:20px 22px;max-width:640px;width:100%;margin:auto;position:relative;">
 
+    <!-- header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;"><svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" width="28" height="28"><rect width="36" height="36" rx="8" fill="#1a2550"/><text x="22" y="27" font-family="Arial Black,Arial,sans-serif" font-size="15" font-weight="900" fill="white" text-anchor="middle">CTS</text><circle cx="5" cy="14" r="2.2" fill="none" stroke="#6abf4b" stroke-width="1.8"/></svg><div style="font-size:15px;font-weight:600;color:var(--text);">CTS Rulez — How to Use</div></div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);">Energy Eye Dashboard · TNB Malaysia · Peninsular</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button onclick="printHelp()" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--mono);cursor:pointer;">🖨 Print</button>
+        <button onclick="downloadHelp()" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--mono);cursor:pointer;">⬇ Download</button>
+        <button onclick="document.getElementById('helpModal').style.display='none'" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:4px 12px;font-size:12px;font-family:var(--mono);cursor:pointer;">✕ Close</button>
+      </div>
+    </div>
+
+    <div id="helpBody"></div>
+
+        <button onclick="document.getElementById('helpModal').style.display='none'" style="width:100%;background:var(--accent);color:#000;border:none;border-radius:7px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);margin-top:6px;">Close</button>
+  </div>
+</div>
+
+<script>
 // Global uncaught error handler — prevents silent crashes
 window.onerror = function(msg, src, line, col, err){
   if(typeof logCrash === 'function') logCrash('uncaught@'+line, err||{message:msg});
@@ -483,6 +734,7 @@ function calcCostRM(kwh, isPeak, tariff){
 // ── constants ─────────────────────────────────────────────────────────
 let PULSE_PER_KWH=1000;  // configurable — 1 pulse = 1 Wh by default
 const PEAK_START=14, PEAK_END=22;
+const PAGE=25;
 
 function calcUnusualThreshold(data){
   const ps=data.map(r=>r.p).filter(p=>p>0);
@@ -493,7 +745,7 @@ function calcUnusualThreshold(data){
 }
 
 // ── state ─────────────────────────────────────────────────────────────
-let fileHandle=null,allData=[];
+let fileHandle=null,allData=[],filtered=[],page=0;
 let intervalId=null,intervalMs=3000;
 let timeFilterMin='all',summaryPeriod='1month';
 let energyChart=null,mainChart=null,hiDistChart=null,kwhStackChart=null;
@@ -517,7 +769,7 @@ async function pickFile(){
       const[h]=await window.showOpenFilePicker({types:[{description:'Log',accept:{'text/plain':['.log','.txt']}}],multiple:false});
       fileHandle=h;set('fileName',h.name);
       document.getElementById('splash').classList.add('hidden');
-      setLive('LIVE',true);await readAndRender();startPolling();
+      showPulseModal(async()=>{setLive('LIVE',true);await readAndRender();startPolling();});
     } else {
       const inp=document.createElement('input');inp.type='file';inp.accept='.log,.txt';
       inp.onchange=async e=>{
@@ -525,16 +777,118 @@ async function pickFile(){
         set('fileName',file.name);set('fileSize',fmtBytes(file.size));
         document.getElementById('splash').classList.add('hidden');
         const text=await file.text();
-        setLive('STATIC',false);set('fileStatus','Loaded (static)');processText(text);
+        showPulseModal(()=>{setLive('STATIC',false);set('fileStatus','Loaded (static)');processText(text);applyFilter();});
       };inp.click();
     }
   }catch(e){if(e.name!=='AbortError')set('fileStatus','Error: '+e.message);}
 }
 
+function getGPS(){
+  const st=document.getElementById('gpsStatus');
+  st.style.color='var(--warn)';st.textContent='Requesting location…';
+  if(!navigator.geolocation){st.style.color='var(--danger)';st.textContent='Geolocation not supported by this browser.';return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    document.getElementById('setupLat').value=pos.coords.latitude.toFixed(6);
+    document.getElementById('setupLng').value=pos.coords.longitude.toFixed(6);
+    st.style.color='var(--success)';
+    st.textContent=`✓ Located: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)} (±${Math.round(pos.coords.accuracy)}m)`;
+  },err=>{
+    st.style.color='var(--danger)';
+    st.textContent='Location denied or unavailable. Enter coordinates manually.';
+  },{enableHighAccuracy:true,timeout:10000});
+}
 
 // store setup info globally
+let siteInfo={name:'',address:'',accNo:'',lat:'',lng:''};
 
+function showPulseModal(callback){
+  _afterModalCallback=callback;
+  // pre-fill fields if siteInfo already set
+  if(siteInfo.name) document.getElementById('setupCustomerName').value=siteInfo.name;
+  if(siteInfo.address) document.getElementById('setupAddress').value=siteInfo.address;
+  if(siteInfo.accNo) document.getElementById('setupAccNo').value=siteInfo.accNo;
+  if(siteInfo.lat) document.getElementById('setupLat').value=siteInfo.lat;
+  if(siteInfo.lng) document.getElementById('setupLng').value=siteInfo.lng;
+  // reset radio highlights
+  document.querySelectorAll('.pr-modal-lbl').forEach(l=>{l.style.borderColor='var(--border)';l.style.background='';});
+  const checked=document.querySelector('input[name="modalPulse"]:checked');
+  if(checked){const lbl=checked.closest('.pr-modal-lbl');if(lbl){lbl.style.borderColor='rgba(0,212,170,.4)';lbl.style.background='rgba(0,212,170,.08)';}}
+  document.getElementById('pulseModal').style.display='flex';
+}
 
+function confirmModalPulse(){
+  const selected=document.querySelector('input[name="modalPulse"]:checked');
+  if(!selected)return;
+  let n;
+  if(selected.value==='custom'){
+    n=parseInt(document.getElementById('modalCustomVal').value);
+    if(!n||n<=0){document.getElementById('modalCustomVal').style.borderColor='var(--danger)';return;}
+  } else {
+    n=parseInt(selected.value);
+  }
+  PULSE_PER_KWH=n;
+  const wh=(1000/n).toFixed(4).replace(/\.?0+$/,'');
+  // save site info
+  siteInfo.name=document.getElementById('setupCustomerName').value.trim();
+  siteInfo.address=document.getElementById('setupAddress').value.trim();
+  siteInfo.accNo=document.getElementById('setupAccNo').value.trim();
+  siteInfo.lat=document.getElementById('setupLat').value.trim();
+  siteInfo.lng=document.getElementById('setupLng').value.trim();
+  // update header subtitle
+  if(siteInfo.name) set('logoSub',`${siteInfo.name} · 1 pulse = ${wh} Wh · TNB tariff July 2025`);
+  document.getElementById('pulseRateLabel').textContent=`1 pulse = ${wh} Wh`;
+  // populate site info card
+  const card=document.getElementById('siteInfoCard');
+  set('cardName', siteInfo.name||'—');
+  set('cardAddress', siteInfo.address||'—');
+  set('cardAccNo', siteInfo.accNo||'—');
+  set('cardPulse', `${PULSE_PER_KWH} pulses = 1 kWh (1 pulse = ${wh} Wh)`);
+  const gpsWrap=document.getElementById('cardGpsWrap');
+  const gpsLink=document.getElementById('cardGps');
+  if(siteInfo.lat && siteInfo.lng){
+    gpsWrap.style.display='block';
+    gpsLink.textContent=`${siteInfo.lat}, ${siteInfo.lng}`;
+    gpsLink.href=`https://maps.google.com/?q=${siteInfo.lat},${siteInfo.lng}`;
+  } else {
+    gpsWrap.style.display='none';
+  }
+  card.style.display=(siteInfo.name||siteInfo.address||siteInfo.accNo)?'block':'none';
+  // sync status bar dropdown
+  const sel=document.getElementById('pulseRateSel');
+  if([1000,500,250,100].includes(n)){sel.value=String(n);}
+  else{let opt=sel.querySelector('[value="custom_val"]');if(!opt){opt=document.createElement('option');opt.value='custom_val';sel.insertBefore(opt,sel.lastChild);}opt.textContent=`${n} pulses = 1 kWh`;sel.value='custom_val';}
+  // close modal
+  document.getElementById('pulseModal').style.display='none';
+  // execute callback
+  if(_afterModalCallback) _afterModalCallback();
+}
+
+// highlight modal radio on click
+document.addEventListener('change',e=>{
+  if(e.target.name!=='modalPulse')return;
+  document.querySelectorAll('.pr-modal-lbl').forEach(l=>{l.style.borderColor='var(--border)';l.style.background='';});
+  const lbl=e.target.closest('.pr-modal-lbl');
+  if(lbl){lbl.style.borderColor='rgba(0,212,170,.4)';lbl.style.background='rgba(0,212,170,.08)';}
+  if(e.target.value!=='custom') document.getElementById('modalCustomWrap').style.display='none';
+});
+function togglePolling(){
+  const btn=document.getElementById('stopResumeBtn');
+  if(intervalId){
+    clearInterval(intervalId);
+    intervalId=null;
+    btn.textContent='▶ Resume';
+    btn.style.borderColor='rgba(0,212,170,.4)';
+    btn.style.color='var(--accent)';
+    setLive('PAUSED',false);
+    set('fileStatus','Paused');
+  } else {
+    startPolling();
+    btn.textContent='⏹ Stop';
+    btn.style.borderColor='rgba(239,68,68,.4)';
+    btn.style.color='#f87171';
+    setLive('LIVE',true);
+  }
+}
 
 function setLive(l,a){
   set('liveLabel',l);
@@ -616,7 +970,8 @@ async function readAndRender(){
     set('lastUpdate',new Date().toLocaleTimeString());
     if(document.getElementById('liveLabel')?.textContent!=='STALE')
       set('fileStatus','Live · polling every '+(intervalMs/1000)+'s');
-    }catch(e){
+    try{ applyFilter(); }catch(e){ logCrash('applyFilter',e); }
+  }catch(e){
     logCrash('readAndRender',e);
     set('fileStatus','⚠ Read error: '+e.message+' — retrying...');
   }
@@ -814,10 +1169,14 @@ function processText(text){
     set('bucketCount',allData.length);
     const dates=[...new Set(allData.map(r=>r.date).filter(Boolean))];
     set('logDate',dates[dates.length-1]||'—');
-    }catch(e){ logCrash('processText',e); }
+    populateTimeSelectors();
+    try{ applyFilter(); }catch(e){ logCrash('applyFilter-inner',e); }
+  }catch(e){ logCrash('processText',e); }
+  try{ updateMetrics(); }catch(e){ logCrash('updateMetrics',e); }
+  try{ updateTariff(); }catch(e){ logCrash('updateTariff',e); }
   try{ updateCharts(); }catch(e){ logCrash('updateCharts',e); }
+  try{ updateSummary(); }catch(e){ logCrash('updateSummary',e); }
   try{ updateDeviceStatus(_lastText); }catch(e){ logCrash('updateDeviceStatus',e); }
-  try{ if(typeof applyFilter==='function') applyFilter(); }catch(e){ logCrash('applyFilter',e); }
 }
 
 function getViewData(){
@@ -844,7 +1203,142 @@ function getViewData(){
   });
 }
 
+function getSummaryData(period){
+  const periodMins={'15min':15,'1hour':60,'1day':1440,'1week':10080,'1month':43200,'1year':525600};
+  const mins=periodMins[period]||15;
 
+  // Use PC clock RTC for span calculation
+  const _rtcMs=r=>{try{return new Date(r.date+'T'+r.rtc).getTime();}catch(e){return 0;}};
+  const validRtc=allData.filter(r=>r.rtc&&r.date);
+  const firstMs=validRtc.length?_rtcMs(validRtc[0]):0;
+  const lastMs=validRtc.length?_rtcMs(validRtc[validRtc.length-1]):0;
+  const nowMs4=Date.now();
+  const actualSpanMins=validRtc.length?(lastMs-firstMs)/60000:0;
+
+  // Rules:
+  // 15min / 1hour → use actual data, no projection needed
+  // 1 day   → need 100% of 1 day   (1440 min); else forecast from actual
+  // 1 week  → need 75% of 1 week   (5 days = 7200 min); else forecast from actual
+  // 1 month → need 75% of 1 month  (3 weeks = 30240 min); else forecast from actual
+  // 1 year  → need 100% of 1 month (43200 min); else insufficient
+  const thresholds={
+    '1day':   { required: periodMins['1day'],            basis: '1day'  },
+    '1week':  { required: periodMins['1day']*5,          basis: '1week' },
+    '1month': { required: periodMins['1week']*3,         basis: '1month'},
+    '1year':  { required: periodMins['1month'],          basis: '1month'},
+  };
+
+  const rule=thresholds[period];
+  if(!rule){
+    // 15min, 1hour — just return actual slice
+    const base=allData.filter(r=>{if(!r.rtc||!r.date)return false;try{return nowMs4-new Date(r.date+'T'+r.rtc).getTime()<=mins*60*1000;}catch(e){return false;}});
+    const totalWh=base.reduce((s,r)=>s+r.wh,0);
+    const peakWh=base.filter(r=>r.isPeak).reduce((s,r)=>s+r.wh,0);
+    return{totalWh,peakWh,offWh:totalWh-peakWh,projected:false,isSufficient:true,
+      actualSpanMins,coveragePct:100,scale:1,basisPeriod:period,period};
+  }
+
+  const isSufficient=actualSpanMins>=rule.required;
+
+  // always filter to actual collected data window (or the target window if smaller)
+  const windowMins=Math.min(actualSpanMins, mins);
+  const base=allData.filter(r=>{if(!r.rtc||!r.date)return false;try{return nowMs4-new Date(r.date+'T'+r.rtc).getTime()<=windowMins*60*1000;}catch(e){return false;}});
+
+  // scale from actual span up to target period
+  const scale=actualSpanMins>0?mins/actualSpanMins:1;
+  const coveragePct=Math.min(100,Math.round((actualSpanMins/mins)*100));
+
+  const totalWh=base.reduce((s,r)=>s+r.wh,0);
+  const peakWh=base.filter(r=>r.isPeak).reduce((s,r)=>s+r.wh,0);
+
+  // if 1 year, scale via monthly basis: fill month first then ×12
+  let scaleTotal=scale;
+  if(period==='1year' && isSufficient){
+    // actual ≥ 1 month: scale actual to 1 month, then ×12
+    const scaleToMonth=periodMins['1month']/actualSpanMins;
+    scaleTotal=scaleToMonth*(periodMins['1year']/periodMins['1month']);
+  }
+
+  return{
+    totalWh:totalWh*scaleTotal, peakWh:peakWh*scaleTotal, offWh:(totalWh-peakWh)*scaleTotal,
+    projected:!isSufficient || period==='1year',
+    isSufficient, actualSpanMins, coveragePct,
+    scale:scaleTotal, basisPeriod:rule.basis, period,
+    requiredMins:rule.required
+  };
+}
+
+function updateMetrics(){
+  const d=getViewData();if(!d.length)return;
+  const threshold=calcUnusualThreshold(d);
+  const totalP=d.reduce((s,r)=>s+r.p,0);
+  const totalWh=d.reduce((s,r)=>s+r.wh,0);
+  const peakWh=d.filter(r=>r.isPeak).reduce((s,r)=>s+r.wh,0);
+  const offWh=totalWh-peakWh;
+  const maxPRow=d.reduce((mx,r)=>r.p>mx.p?r:mx,{p:-1});
+  const unusual=d.filter(r=>r.p>threshold);
+  set('s-kwh',(totalWh/1000).toFixed(3));set('s-kwh-sub','kWh ('+totalWh.toFixed(0)+' Wh)');
+  set('s-total',totalP);set('s-total-sub',d.length+' buckets');
+  // ── AVG KWH: bucket-count-aware average per filter context ──
+  _calcAvgKwh(d, d.length);
+  set('s-peak-wh',peakWh.toFixed(0));set('s-peak-wh-sub',(peakWh/1000).toFixed(3)+' kWh');
+  set('s-offpeak-wh',offWh.toFixed(0));
+  set('s-maxpulse',maxPRow.p<0?'—':maxPRow.p);
+  set('s-maxpulse-sub',maxPRow.p>=0?(maxPRow.rtc||'—'):'—');
+  set('s-unusual',unusual.length);set('s-unusual-sub','threshold: >'+threshold+' p');
+  // alert
+  let lastTs=null;for(let i=allData.length-1;i>=0;i--){if(allData[i].log_ts){lastTs=parseLogTs(allData[i].log_ts);break;}}
+
+  // all buckets in last 15 min (peak + off-peak)
+  const all15=allData.filter(r=>
+    (lastTs-parseLogTs(r.log_ts))*1000<=15*60*1000
+  );
+
+  // unusual = above threshold, sorted highest pulse first
+  const unusual15=[...all15.filter(r=>r.p>threshold)].sort((a,b)=>b.p-a.p);
+
+  const card=document.getElementById('alertCard');
+  const tbody=document.getElementById('alertTableBody');
+  const sumEl=document.getElementById('alertSummary');
+  const moreEl=document.getElementById('alertMore');
+
+  if(unusual15.length){
+    card.classList.add('show');
+    const totalWh=unusual15.reduce((s,r)=>s+r.wh,0);
+    const maxPulse=unusual15[0].p;
+    const rest=unusual15.length-5;
+
+    sumEl.innerHTML=`
+      <span style="font-size:11px;font-family:var(--mono);background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);padding:3px 10px;border-radius:5px;">⚠ ${unusual15.length} unusual bucket${unusual15.length>1?'s':''}</span>
+      <span style="font-size:11px;font-family:var(--mono);background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.25);padding:3px 10px;border-radius:5px;">Total: ${totalWh.toFixed(0)} Wh</span>
+      <span style="font-size:11px;font-family:var(--mono);background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);padding:3px 10px;border-radius:5px;">Max pulse: ${maxPulse}</span>
+      <span style="font-size:11px;font-family:var(--mono);color:var(--muted);">threshold: >${threshold} p</span>`;
+
+    tbody.innerHTML=unusual15.map(r=>`
+      <tr style="border-bottom:1px solid rgba(239,68,68,.1);">
+        <td style="padding:5px 8px;color:#fbbf24;">${r.rtc||'—'}</td>
+        <td style="padding:5px 8px;color:var(--accent);font-size:10px;font-family:var(--mono);">${r.log_ts||'—'}</td>
+        
+        <td style="padding:5px 8px;text-align:right;"><span style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);border-radius:4px;padding:1px 7px;font-weight:600;font-family:var(--mono);font-size:10px;">${r.p}</span></td>
+        <td style="padding:5px 8px;text-align:right;"><span style="background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.2);border-radius:4px;padding:1px 7px;font-family:var(--mono);font-size:10px;">${r.wh.toFixed(0)} Wh</span></td>
+        <td style="padding:5px 8px;text-align:right;"><span style="background:${r.isPeak?'rgba(245,158,11,.1)':'rgba(90,106,126,.12)'};color:${r.isPeak?'#fbbf24':'var(--muted)'};border:1px solid ${r.isPeak?'rgba(245,158,11,.25)':'var(--border)'};border-radius:4px;padding:1px 6px;font-size:10px;">${r.isPeak?'Peak':'Off-peak'}</span></td>
+        <td style="padding:5px 8px;text-align:right;color:var(--muted);font-size:11px;">${r.HI}</td>
+        <td style="padding:5px 8px;text-align:right;color:var(--muted);font-size:11px;">${r.LO}</td>
+      </tr>`).join('');
+
+    if(rest>0){moreEl.style.display='block';moreEl.textContent=`…and ${rest} more unusual bucket${rest>1?'s':''} in last 15 min`;}
+    else{moreEl.style.display='none';}
+  } else {
+    card.classList.remove('show');
+  }
+  // dropdowns
+  const hiVals=[...new Set(d.map(r=>r.HI))].sort((a,b)=>a-b);
+  const hiSel=document.getElementById('hiFilter');const curHI=hiSel.value;
+  hiSel.innerHTML='<option value="all">All HI</option>'+hiVals.map(v=>`<option value="${v}"${curHI==v?' selected':''}>${v}</option>`).join('');
+  const dates=[...new Set(d.map(r=>r.date).filter(Boolean))];
+  const dSel=document.getElementById('dateFilter');const curD=dSel.value;
+  dSel.innerHTML='<option value="all">All dates</option>'+dates.map(v=>`<option value="${v}"${curD==v?' selected':''}>${v}</option>`).join('');
+}
 
 // ── TNB TARIFF DATABASE (Jul 2025, Peninsular Malaysia) ────────────────
 // Energy + Capacity + Network = total per kWh
@@ -996,14 +1490,249 @@ const TNB_TARIFFS = {
 
 let selectedTariff = 'A', selectedPhase = '1';
 
+function selectTariff(t, btn){
+  selectedTariff = t;
+  document.querySelectorAll('[id^="tr-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTariffInfo();
+  updateTariff();
+  updateSummary();
+}
 
+function selectPhase(p, btn){
+  selectedPhase = p;
+  document.querySelectorAll('[id^="ph-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTariffInfo();
+  updateSummary();
+}
 
+function renderTariffInfo(){
+  const t = TNB_TARIFFS[selectedTariff];
+  const phaseLabel = t.phase[selectedPhase];
+  const gen = t.general;
+  const tou = t.tou;
+  const isTiered = gen.tiers.length > 1;
 
+  const card = document.getElementById('tariffInfoCard');
+  card.innerHTML = `
+    <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:8px;font-family:var(--mono);">${t.name}</div>
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:10px;">
+      ${phaseLabel} · ${t.supply} · <span style="color:var(--accent2);">${t.use}</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:10px;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border2);">
+          <th style="text-align:left;padding:4px 6px;color:var(--muted);">Component</th>
+          <th style="text-align:right;padding:4px 6px;color:rgba(59,130,246,.8);">General</th>
+          <th style="text-align:right;padding:4px 6px;color:rgba(0,212,170,.8);">ToU Peak</th>
+          <th style="text-align:right;padding:4px 6px;color:var(--accent);">ToU Off-Peak</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${gen.tiers.map((tier,i)=>{
+          const touT = tou.tiers[i]||tou.tiers[0];
+          const limitLabel = tier.limit===Infinity ? (isTiered?'>1500 kWh':'All usage') : '≤'+tier.limit+' kWh';
+          return `
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:4px 6px;color:var(--muted);">Energy (${limitLabel})</td>
+            <td style="text-align:right;padding:4px 6px;color:var(--accent2);">${tier.energy} sen</td>
+            <td style="text-align:right;padding:4px 6px;color:var(--warn);">${touT.peak} sen</td>
+            <td style="text-align:right;padding:4px 6px;color:var(--accent);">${touT.offpeak} sen</td>
+          </tr>`;
+        }).join('')}
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:4px 6px;color:var(--muted);">Capacity Charge</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--accent2);">${gen.tiers[0].cap} sen</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--warn);">${tou.tiers[0].cap} sen</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--accent);">${tou.tiers[0].cap} sen</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:4px 6px;color:var(--muted);">Network Charge</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--accent2);">${gen.tiers[0].net} sen</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--warn);">${tou.tiers[0].net} sen</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--accent);">${tou.tiers[0].net} sen</td>
+        </tr>
+        <tr style="background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border2);">
+          <td style="padding:4px 6px;color:var(--text);font-weight:500;">Total Rate ${isTiered?'(≤1500)':''}</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--accent2);font-weight:500;">${gen.tiers[0].total} sen/kWh</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--warn);font-weight:500;">${tou.tiers[0].peakTotal} sen/kWh</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--accent);font-weight:500;">${tou.tiers[0].offTotal} sen/kWh</td>
+        </tr>
+        ${isTiered?`
+        <tr style="background:rgba(255,255,255,0.03);">
+          <td style="padding:4px 6px;color:var(--text);font-weight:500;">Total Rate (>1500)</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--warn);font-weight:500;">${gen.tiers[1].total} sen/kWh</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--warn);font-weight:500;">${tou.tiers[1].peakTotal} sen/kWh</td>
+          <td style="text-align:right;padding:4px 6px;color:var(--amber);font-weight:500;">${tou.tiers[1].offTotal} sen/kWh</td>
+        </tr>`:''}
+        <tr>
+          <td style="padding:4px 6px;color:var(--muted);">Retail Charge</td>
+          <td colspan="3" style="text-align:right;padding:4px 6px;color:var(--muted);">RM${gen.retail}/mth${gen.retailWaive?` (waived ≤${gen.retailWaive} kWh)`:''}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 6px;color:var(--muted);">ToU Peak Hours</td>
+          <td colspan="3" style="text-align:right;padding:4px 6px;color:var(--warn);">${tou.peakHours} · weekends/PH = off-peak</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:var(--mono);">${gen.note}</div>
+  `;
+}
+
+function updateTariff(){
+  const d = getViewData(); if(!d.length) return;
+  const t = TNB_TARIFFS[selectedTariff];
+  const gen = t.general;
+  const tou = t.tou;
+  const totalKwh = d.reduce((s,r)=>s+r.kwh, 0);
+  const peakKwh = d.filter(r=>r.isPeak).reduce((s,r)=>s+r.kwh, 0);
+  const offKwh = totalKwh - peakKwh;
+
+  // pick correct tier based on total monthly extrapolation
+  const tier = gen.tiers.length > 1 && totalKwh > gen.tiers[0].limit ? 1 : 0;
+  const genRate = gen.tiers[tier].total / 100;
+  const touPeakRate = tou.tiers[tier].peakTotal / 100;
+  const touOffRate = tou.tiers[tier].offTotal / 100;
+
+  const genCost = totalKwh * genRate;
+  const touCost = peakKwh * touPeakRate + offKwh * touOffRate;
+  const saving = genCost - touCost;
+
+  set('tc-kwh', totalKwh.toFixed(4));
+  set('tc-peak-kwh', peakKwh.toFixed(4));
+  set('tc-gen-cost', 'RM ' + genCost.toFixed(4));
+  set('tc-gen-rate', '@ ' + (gen.tiers[tier].total) + ' sen/kWh');
+  set('tc-tou-cost', 'RM ' + touCost.toFixed(4));
+  set('tc-tou-rate', 'peak ' + tou.tiers[tier].peakTotal + ' / off ' + tou.tiers[tier].offTotal + ' sen/kWh');
+
+  const banner = document.getElementById('tc-saving-banner');
+  if(saving > 0){
+    banner.style.background = 'rgba(16,185,129,.08)';
+    banner.style.color = 'var(--success)';
+    banner.style.borderColor = 'rgba(16,185,129,.2)';
+    banner.textContent = `✓ ToU saves RM ${saving.toFixed(4)} (${((saving/genCost)*100).toFixed(1)}% cheaper) — shift usage to off-peak hours to benefit`;
+  } else if(saving < 0){
+    banner.style.background = 'rgba(239,68,68,.07)';
+    banner.style.color = 'var(--danger)';
+    banner.style.borderColor = 'rgba(239,68,68,.2)';
+    banner.textContent = `✗ ToU costs RM ${Math.abs(saving).toFixed(4)} more — ${((peakKwh/totalKwh)*100).toFixed(0)}% of usage is in peak hours, shift more to off-peak to save`;
+  } else {
+    banner.style.background = 'rgba(90,106,126,.1)';
+    banner.style.color = 'var(--muted)';
+    banner.style.borderColor = 'var(--border)';
+    banner.textContent = 'General and ToU cost the same for this usage pattern.';
+  }
+}
 
 // init
+setTimeout(()=>{ renderTariffInfo(); }, 50);
 
+function updateSummary(){
+  const {totalWh,peakWh,offWh,projected,isSufficient,actualSpanMins,coveragePct,scale,basisPeriod,requiredMins}=getSummaryData(summaryPeriod);
+  const periodMins={'15min':15,'1hour':60,'1day':1440,'1week':10080,'1month':43200,'1year':525600};
+  const totalKwh=totalWh/1000;const peakKwh=peakWh/1000;const offKwh=offWh/1000;
+
+  // use selected tariff from TNB_TARIFFS
+  const t=TNB_TARIFFS[selectedTariff];
+  const tier=t.general.tiers.length>1&&totalKwh>t.general.tiers[0].limit?1:0;
+  const genRatePerKwh=t.general.tiers[tier].total/100;
+  const touPeakRatePerKwh=t.tou.tiers[tier].peakTotal/100;
+  const touOffRatePerKwh=t.tou.tiers[tier].offTotal/100;
+
+  const genCost=totalKwh*genRatePerKwh;
+  const touCost=peakKwh*touPeakRatePerKwh+offKwh*touOffRatePerKwh;
+  const saving=genCost-touCost;
+
+  // tariff label for display
+  const tariffShort={'A':'Tariff A','BD':'Tariff B/D','C1':'Tariff C1','C2':'Tariff C2','E1':'Tariff E1','E2':'Tariff E2'}[selectedTariff]||selectedTariff;
+  const periodLabel={'15min':'last 15 min','1hour':'last 1 hour','1day':'last 1 day','1week':'last 1 week','1month':'last 1 month','1year':'projected 1 year'}[summaryPeriod];
+  const period=summaryPeriod;
+
+  // format actual span
+  function fmtMins(m){
+    if(m<60)return Math.round(m)+'min';
+    if(m<1440)return (m/60).toFixed(1)+'h';
+    return (m/1440).toFixed(1)+'d';
+  }
+
+  const dataLabel=projected
+    ? `⚠ Forecast · based on ${fmtMins(actualSpanMins)} of data (${coveragePct}% of ${periodLabel.replace('last ','')})`
+    : periodLabel;
+
+  set('sum-kwh',totalKwh.toFixed(4)+' kWh');
+  set('sum-wh',totalWh.toFixed(0)+' Wh · '+dataLabel);
+  const forecastMark=(!isSufficient||period==='1year')&&projected?` *`:'';
+  set('sum-gen','RM '+genCost.toFixed(4)+forecastMark);
+  document.querySelector('#summaryGrid .sg-card:nth-child(2) .sg-sub').textContent=`RM · ${tariffShort} General`;
+  set('sum-tou','RM '+touCost.toFixed(4)+forecastMark);
+  document.querySelector('#summaryGrid .sg-card:nth-child(3) .sg-sub').textContent=`RM · ${tariffShort} ToU · peak/off split`;
+  const saveEl=document.getElementById('sum-save');
+  saveEl.textContent='RM '+Math.abs(saving).toFixed(4)+forecastMark;
+  saveEl.className='sg-val '+(saving>=0?'green':'red');
+  set('sum-save-sub',saving>=0?'saved with ToU vs General':'extra cost with ToU');
+
+  // sufficiency warning banner
+  let banner=document.getElementById('sumWarningBanner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='sumWarningBanner';
+    banner.style.cssText='margin-top:10px;font-size:11px;font-family:var(--mono);padding:8px 12px;border-radius:6px;';
+    document.getElementById('summaryGrid').after(banner);
+  }
+  const basisLabel={'15min':'15 min','1hour':'1 hour','1day':'1 day','1week':'1 week','1month':'1 month'}[basisPeriod]||basisPeriod;
+
+  // requirement labels per period
+  const reqLabel={
+    '1day':  'Full 1 day required',
+    '1week': '5 days required (75% of 1 week)',
+    '1month':'3 weeks required (75% of 1 month)',
+    '1year': 'Full 1 month required',
+  }[period];
+
+  if(!projected){
+    banner.style.display='none';
+
+  } else if(!isSufficient){
+    // not enough — red warning
+    const stillNeed=Math.max(0,requiredMins-actualSpanMins);
+    banner.style.display='block';
+    banner.style.background='rgba(239,68,68,.07)';
+    banner.style.border='1px solid rgba(239,68,68,.2)';
+    banner.style.color='#f87171';
+    banner.innerHTML=`⚠ <strong>Forecast (insufficient data)</strong> — `+
+      `${fmtMins(actualSpanMins)} collected (${coveragePct}% coverage). `+
+      `<strong>${reqLabel}</strong> for a valid ${periodLabel.replace('last ','').replace('projected ','')} forecast. `+
+      `Collect ~${fmtMins(stillNeed)} more. Values marked * are rough estimates only.`;
+
+  } else if(period==='1year'){
+    // sufficient for 1-year (full month) — always shown as forecast
+    banner.style.display='block';
+    banner.style.background='rgba(16,185,129,.06)';
+    banner.style.border='1px solid rgba(16,185,129,.2)';
+    banner.style.color='var(--success)';
+    banner.innerHTML=`✓ <strong>1-year forecast</strong> — based on full 1-month data × 12. Reliable annual projection.`;
+
+  } else {
+    // sufficient but period > actual span — partial forecast
+    banner.style.display='block';
+    banner.style.background='rgba(59,130,246,.07)';
+    banner.style.border='1px solid rgba(59,130,246,.25)';
+    banner.style.color='#60a5fa';
+    banner.innerHTML=`📊 <strong>Forecast *</strong> — ${fmtMins(actualSpanMins)} of data collected (${coveragePct}% of ${basisLabel}). `+
+      `Extrapolated to full ${periodLabel.replace('last ','').replace('projected ','')}. `+
+      `${reqLabel}.`;
+  }
+}
 
 // ── charts ─────────────────────────────────────────────────────────────
+function cardDeviceClick(){
+  // if fail — open device status panel
+  const label=document.getElementById('cardDeviceLabel')?.textContent||'';
+  if(label.includes('Fail')){
+    _dspVisible=false; dspToggle(); // force open
+  }
+}
 
 function updateDeviceStatus(text){
   if(!text) return;
@@ -1068,10 +1797,7 @@ function updateDeviceStatus(text){
         <span style="background:${e.col}22;color:${e.col};border-radius:3px;padding:0 5px;font-size:9px;min-width:44px;text-align:center;font-family:var(--mono);">${e.type}</span>
         <span style="color:#9ca3af;font-size:10px;font-family:var(--mono);">${e.msg}</span>
       </div>`).join('');
-    }
-    var noEvEl=document.getElementById('dsp-no-events');
-    if(noEvEl) noEvEl.style.display=events.length?'none':'block';
-    if(el&&!events.length) el.innerHTML='';
+    }else{el.innerHTML='<div style="color:#5a6a7e;font-size:10px;font-family:var(--mono);padding:4px 0;">No events detected in log</div>';}
   }
   const pill=document.getElementById('cardDevicePill');
   const dot=document.getElementById('cardDeviceDot');
@@ -1450,23 +2176,173 @@ function updateKwhStackChart(d){
 }
 
 // ── filters ────────────────────────────────────────────────────────────
+function setTimeFilterToday(btn){
+  const today=new Date();
+  const d=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  timeFilterMin='day:'+d;
+  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateMetrics();updateTariff();updateCharts();updateSummary();applyFilter();
+}
 
+function setTimeFilter(val,btn){
+  timeFilterMin=val;
+  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  updateMetrics();updateTariff();updateCharts();updateSummary();applyFilter();
+}
 
 // filter to a specific calendar day from data
 
 // ── DATE RANGE FILTER ─────────────────────────────────────────────────
 let _allDates=[]; // sorted unique dates from data
 
+function populateTimeSelectors(){
+  if(!allData.length) return;
+  _allDates=[...new Set(allData.map(r=>r.date).filter(Boolean))].sort();
+  if(!_allDates.length) return;
+  const first=_allDates[0], last=_allDates[_allDates.length-1];
+  const fromEl=document.getElementById('rangeFrom');
+  const toEl=document.getElementById('rangeTo');
+  const sf=document.getElementById('sliderFrom');
+  const st=document.getElementById('sliderTo');
 
+  // always update min/max bounds to reflect full data range
+  fromEl.min=first; fromEl.max=last;
+  toEl.min=first;   toEl.max=last;
 
+  // set initial values if not set yet
+  if(!fromEl.value) fromEl.value=first;
+  // always auto-extend To to latest date so new days appear
+  if(!toEl.value || toEl.value<last) toEl.value=last;
 
+  sf.max=_allDates.length-1;
+  st.max=_allDates.length-1;
 
+  // sync sliders to current date values
+  const fi=_allDates.indexOf(fromEl.value);
+  const ti=_allDates.indexOf(toEl.value);
+  sf.value=fi>=0?fi:0;
+  st.value=ti>=0?ti:_allDates.length-1;
+  updateRangeTrack();
+  updateRangeLabel();
+}
 
+function resetRangeFilter(){
+  if(_allDates.length){
+    document.getElementById('rangeFrom').value=_allDates[0];
+    document.getElementById('rangeTo').value=_allDates[_allDates.length-1];
+    const lbl=document.getElementById('rangeLabel');if(lbl)lbl.textContent='';
+  }
+  timeFilterMin='all';
+  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tf-all').classList.add('active');
+  document.getElementById('rangePicker').style.display='none';
+  updateMetrics();updateTariff();updateCharts();updateSummary();applyFilter();
+}
 
+function toggleRangePicker(btn){
+  const picker=document.getElementById('rangePicker');
+  const showing=picker.style.display!=='none';
+  picker.style.display=showing?'none':'block';
+  if(!showing){
+    document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if(_allDates.length) applyRangeFilter();
+  }
+}
 
+function onSliderChange(which){
+  const sf=document.getElementById('sliderFrom');
+  const st=document.getElementById('sliderTo');
+  let fi=parseInt(sf.value), ti=parseInt(st.value);
+  // prevent crossing
+  if(which==='from' && fi>ti){ fi=ti; sf.value=fi; }
+  if(which==='to'   && ti<fi){ ti=fi; st.value=ti; }
+  if(_allDates.length){
+    document.getElementById('rangeFrom').value=_allDates[fi]||'';
+    document.getElementById('rangeTo').value  =_allDates[ti]||'';
+  }
+  updateRangeTrack();
+  updateRangeLabel();
+  applyRangeFilter();
+}
 
+function updateRangeTrack(){
+  const sf=document.getElementById('sliderFrom');
+  const st=document.getElementById('sliderTo');
+  const wrap=document.getElementById('rangeSliderWrap');
+  const track=document.getElementById('rangeTrack');
+  if(!sf||!st||!wrap) return;
+  const max=parseInt(sf.max)||1;
+  const left=(parseInt(sf.value)/max)*100;
+  const right=(parseInt(st.value)/max)*100;
+  track.style.left=left+'%';
+  track.style.width=(right-left)+'%';
+}
 
+function updateRangeLabel(){
+  const from=document.getElementById('rangeFrom').value;
+  const to  =document.getElementById('rangeTo').value;
+  const lbl =document.getElementById('rangeLabel');
+  if(!from||!to){lbl.textContent='';return;}
+  if(from===to){lbl.textContent=formatDate(from);}
+  else{
+    // count days in range
+    const d1=new Date(from),d2=new Date(to);
+    const days=Math.round((d2-d1)/(1000*60*60*24))+1;
+    lbl.textContent=formatDate(from)+' → '+formatDate(to)+' ('+days+'d)';
+  }
+}
 
+function formatDate(d){
+  const dt=new Date(d+'T00:00:00');
+  const dname=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];
+  const mname=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][dt.getMonth()];
+  return dname+' '+String(dt.getDate()).padStart(2,'0')+'-'+mname+'-'+dt.getFullYear();
+}
+
+function applyRangeFilter(){
+  const from=document.getElementById('rangeFrom').value;
+  const to  =document.getElementById('rangeTo').value;
+  if(!from||!to) return;
+  timeFilterMin='range:'+from+':'+to;
+  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tf-range-btn').classList.add('active');
+  updateRangeLabel();
+  updateMetrics();updateTariff();updateCharts();updateSummary();applyFilter();
+}
+
+setTimeout(populateTimeSelectors,100);
+
+function setSummaryPeriod(period,btn){
+  summaryPeriod=period;
+  document.querySelectorAll('.sum-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateSummary();
+}
+
+function applyFilter(){
+  const q=document.getElementById('filterInput').value.toLowerCase();
+  const pf=document.getElementById('pulseFilter').value;
+  const hf=document.getElementById('hiFilter').value;
+  const df=document.getElementById('dateFilter').value;
+  const rev=document.getElementById('latestFirst').checked;
+  const threshold=calcUnusualThreshold(allData);
+  const view=getViewData();
+  filtered=view.filter((r)=>{
+    const mQ=!q||r.date.includes(q)||r.rtc.includes(q)||String(r.HI).includes(q)||String(r.LO).includes(q)||String(r.p).includes(q);
+    const mP=pf==='all'||(pf==='active'&&r.p>0)||(pf==='zero'&&r.p===0)||(pf==='unusual'&&r.p>threshold)||(pf==='peak'&&r.isPeak)||(pf==='offpeak'&&!r.isPeak);
+    const mH=hf==='all'||String(r.HI)===hf;
+    const mD=df==='all'||r.date===df;
+    return mQ&&mP&&mH&&mD;
+  });
+  if(rev)filtered=[...filtered].reverse();
+  page=0;
+  // Recalculate AVG KWH from the filtered set
+  _calcAvgKwh(filtered, filtered.length);
+  renderTable();
+}
 
 // ── AVG KWH — Dashboard Reporting Rules ──────────────────────────────
 // 15 min  → latestBucketKwh                              → "kWh (15 min) · N buckets"
@@ -1477,7 +2353,128 @@ let _allDates=[]; // sorted unique dates from data
 // 1 year  → totalKwh ÷ weeks                             → "kWh/week avg · N weeks"
 // Range   → totalKwh ÷ uniqueDays                        → "kWh/day avg · N days"
 // All     → totalKwh ÷ uniqueDays                        → "kWh/day avg · N days"
+function _calcAvgKwh(rows, bucketCount){
+  if(!rows||!rows.length){set('s-avg-kwh','—');set('s-avg-kwh-sub','—');return;}
 
+  const totalKwh=rows.reduce((s,r)=>s+r.wh,0)/1000;
+  const uniqDays=[...new Set(rows.map(r=>r.date).filter(Boolean))];
+  const numDays=uniqDays.length||1;
+  const tf=timeFilterMin;
+
+  // Latest bucket by max date+rtc string (display-order independent)
+  const latestRow=rows.reduce((best,r)=>
+    ((r.date||'')+(r.rtc||''))>((best.date||'')+(best.rtc||''))?r:best
+  , rows[0]);
+  const latestBucketKwh=latestRow?latestRow.wh/1000:0;
+
+  let val, label, sub;
+
+  // ── 15 min ─────────────────────────────────────────────────────────
+  if(tf===15){
+    val=latestBucketKwh.toFixed(4);
+    label='kWh (15 min)';
+    sub=bucketCount+' bucket'+(bucketCount!==1?'s':'');
+
+  // ── 1 hour ─────────────────────────────────────────────────────────
+  // Previous completed hour: totalKwhPrevHour ÷ numBucketsPrevHour
+  } else if(tf===60||tf===120){
+    const latestHour=latestRow&&latestRow.rtcHour>=0?latestRow.rtcHour:new Date().getHours();
+    const prevHour=(latestHour-1+24)%24;
+    const prevRows=rows.filter(r=>r.rtcHour===prevHour);
+    const curRows=rows.filter(r=>r.rtcHour===latestHour);
+    const useRows=prevRows.length>0?prevRows:curRows;
+    const useHour=prevRows.length>0?prevHour:latestHour;
+    const hourKwh=useRows.reduce((s,r)=>s+r.wh,0)/1000;
+    const hourBuckets=useRows.length||1;
+    val=(hourKwh/hourBuckets).toFixed(4);
+    label='kWh (1 hour avg)';
+    sub=String(useHour).padStart(2,'0')+':00 · '+hourBuckets+' bucket'+(hourBuckets!==1?'s':'');
+
+  // ── 1 day ──────────────────────────────────────────────────────────
+  // Adaptive: totalKwh ÷ hoursReceived (cap 24)
+  } else if(typeof tf==='string'&&tf.startsWith('day:')){
+    const dayDate=tf.slice(4);
+    const uniqHours=[...new Set(rows.map(r=>r.rtcHour).filter(h=>h!=null&&h>=0))];
+    const hoursReceived=Math.max(uniqHours.length,1);
+    const divisor=Math.min(hoursReceived,24);
+    val=(totalKwh/divisor).toFixed(4);
+    label='kWh/day avg';
+    sub=dayDate+' · '+hoursReceived+'h received · '+bucketCount+' bucket'+(bucketCount!==1?'s':'');
+
+  // ── 1 week ─────────────────────────────────────────────────────────
+  // Adaptive: totalKwh ÷ daysReceived (cap 7)
+  } else if(tf===10080){
+    const daysReceived=Math.min(numDays,7);
+    val=(totalKwh/Math.max(daysReceived,1)).toFixed(4);
+    label='kWh/day avg';
+    sub='1 week · '+daysReceived+'d received · '+bucketCount+' bucket'+(bucketCount!==1?'s':'');
+
+  // ── 1 month ────────────────────────────────────────────────────────
+  } else if(tf===43200){
+    val=(totalKwh/numDays).toFixed(4);
+    label='kWh/day avg';
+    sub=numDays+' day'+(numDays!==1?'s':'');
+
+  // ── 1 year ─────────────────────────────────────────────────────────
+  } else if(tf===525600){
+    const weeks=Math.max(1,Math.ceil(numDays/7));
+    val=(totalKwh/weeks).toFixed(4);
+    label='kWh/week avg';
+    sub=weeks+' week'+(weeks!==1?'s':'');
+
+  // ── Range & All ────────────────────────────────────────────────────
+  } else {
+    val=(totalKwh/numDays).toFixed(4);
+    label='kWh/day avg';
+    sub=numDays+' day'+(numDays!==1?'s':'');
+  }
+
+  set('s-avg-kwh', val);
+  set('s-avg-kwh-sub', label+' · '+sub);
+}
+
+function renderTable(){
+  const threshold=calcUnusualThreshold(allData);
+  const slice=filtered.slice(page*PAGE,(page+1)*PAGE);
+  const rev=document.getElementById('latestFirst').checked;
+  document.getElementById('tableBody').innerHTML=slice.map((r,si)=>{
+    const origIdx=allData.indexOf(r);
+    const dH=r.date?`<span class="pill p-date">${r.date}</span>`:`<span class="pill p-none">—</span>`;
+    const rH=r.rtc?`<span class="pill p-rtc">${r.rtc}</span>`:`<span class="pill p-none">—</span>`;
+    const lH=r.log_ts?`<span style="color:var(--accent);font-size:10px;font-family:var(--mono);">${r.log_ts}</span>`:`<span style="color:var(--muted);font-size:10px;">—</span>`;
+
+    const pC=r.p>threshold?'p-unusual':r.p>0?'p-pulse':'p-zero';
+    const perH=r.isPeak?`<span class="pill p-peak">Peak</span>`:`<span class="pill p-off">Off</span>`;
+    const flagH=r.p>threshold?`<span class="pill p-unusual">⚠</span>`:`<span style="color:var(--muted);font-size:10px;">—</span>`;
+    const flash=si<3&&page===0&&rev?'flash':'';
+    const unusual=r.p>threshold?'unusual-row':'';
+    return `<tr class="${flash} ${unusual}">
+      <td style="color:var(--muted);">${origIdx+1}</td>
+      <td>${dH}</td><td>${rH}</td><td>${lH}</td>
+      <td><span class="pill p-hi">${r.HI}</span></td>
+      <td><span class="pill p-lo">${r.LO}</span></td>
+      <td style="color:var(--muted);">${r.hw}</td>
+      <td style="color:${r.d>0?'var(--warn)':'var(--muted)'};">${r.d}</td>
+      <td><span class="pill ${pC}">${r.p}</span></td>
+      <td><span class="pill p-kwh">${r.wh.toFixed(0)}Wh</span></td>
+      <td style="color:var(--muted);font-size:10px;">${r.kwhTotal.toFixed(4)}</td>
+      <td>${perH}</td>
+      <td><span class="pill p-rm">RM ${r.genCost.toFixed(5)}</span></td>
+      <td><span class="pill p-rm" style="background:rgba(0,212,170,.1);color:#00d4aa;border-color:rgba(0,212,170,.3);">RM ${r.touCost.toFixed(5)}</span></td>
+      <td>${flagH}</td>
+      <td style="color:var(--muted);">${r.t}s</td>
+    </tr>`;
+  }).join('');
+  const total=Math.ceil(filtered.length/PAGE);
+  set('rowCount',filtered.length+' rows');
+  const pg=document.getElementById('pagination');pg.innerHTML='';
+  if(total<=1)return;
+  const btn=(lbl,t,active)=>{const b=document.createElement('button');b.className='pg-btn'+(active?' active':'');b.textContent=lbl;b.onclick=()=>{page=t;renderTable();};pg.appendChild(b);};
+  if(page>0)btn('‹',page-1,false);
+  const s=Math.max(0,page-2),e=Math.min(total,s+5);
+  for(let i=s;i<e;i++)btn(i+1,i,i===page);
+  if(page<total-1)btn('›',page+1,false);
+}
 
 function applyDashPulseRate(radio){
   let n;
@@ -1607,6 +2604,10 @@ Rate: ${t.general.tiers[tier].total} sen/kWh
 Generated by CTS Rulez Energy Eye Dashboard`;
 }
 
+function showHelp(){
+  buildHelp();
+  document.getElementById('helpModal').style.display='flex';
+}
 
 function buildHelp(){
   const pRate=PULSE_PER_KWH;
@@ -1735,7 +2736,38 @@ function buildHelp(){
   `;
 }
 
+function printHelp(){
+  const content=document.getElementById('helpModal').querySelector('div[style*="max-width:640px"]').innerHTML;
+  const w=window.open('','_blank','width=700,height=900');
+  w.document.write(`<!DOCTYPE html><html><head><title>CTS Rulez — How to Use</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0a0e14;color:#c9d4e0;padding:24px;font-size:12px;line-height:1.6;}
+    *{box-sizing:border-box;}
+    button{display:none!important;}
+    div[style*="display:flex;align-items:center;justify-content:space-between"]:first-child{margin-bottom:16px;}
+    @media print{body{background:#fff;color:#000;}}
+  </style></head><body>${content}</body></html>`);
+  w.document.close();
+  w.focus();
+  w.print();
+}
 
+function downloadHelp(){
+  const content=document.getElementById('helpModal').querySelector('div[style*="max-width:640px"]').innerHTML;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>CTS Rulez — How to Use</title>
+  <style>
+    :root{--bg:#0a0e14;--surface:#111720;--surface2:#161d28;--text:#c9d4e0;--muted:#5a6a7e;--accent:#00d4aa;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.12);}
+    body{font-family:Arial,sans-serif;background:var(--bg);color:var(--text);padding:24px;font-size:12px;line-height:1.6;margin:0;}
+    button{display:none!important;}
+    *{box-sizing:border-box;}
+  </style></head><body>${content}</body></html>`;
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='CTS_Rulez_How_To_Use.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 function setPulseRate(val){
   if(val==='custom'){
@@ -1837,7 +2869,30 @@ window.addEventListener('load',()=>{
 });
 
 
+let _dspVisible=false, _dspPaused=false;
+function dspToggle(){
+  _dspVisible=!_dspVisible;
+  document.getElementById('dsp-panel').style.display=_dspVisible?'block':'none';
+  document.getElementById('dsp-fab-arrow').textContent=_dspVisible?'▼':'▲';
+}
+function dspPause(){
+  _dspPaused=!_dspPaused;
+  const btn=document.getElementById('dsp-pause-btn');
+  const banner=document.getElementById('dsp-paused-banner');
+  const dot=document.getElementById('dsp-fab-dot');
+  btn.textContent=_dspPaused?'▶ Resume':'⏸ Pause';
+  btn.style.background=_dspPaused?'rgba(245,158,11,.15)':'#1e2a38';
+  btn.style.color=_dspPaused?'#f59e0b':'#9ca3af';
+  btn.style.borderColor=_dspPaused?'rgba(245,158,11,.3)':'#2d3f50';
+  banner.style.display=_dspPaused?'block':'none';
+  dot.style.background=_dspPaused?'#f59e0b':'#00d4aa';
+  dot.style.animation=_dspPaused?'none':'blink 1.4s ease-in-out infinite';
+}
 // Single wrap: pause guard (state is saved inside updateDeviceStatus itself)
+const _dspOrigFn=updateDeviceStatus;
+updateDeviceStatus=function(text){
+  if(!_dspPaused) _dspOrigFn(text);
+};
 
 // ── VERSION CONTROL (hold / reverse) ────────────────────────────────────
 let _savedVersion=null;
@@ -1859,154 +2914,8 @@ function versionControl(cmd){
 }
 window.hold=()=>versionControl('hold');
 window.reverse=()=>versionControl('reverse');
-
-// ── INLINE SETUP ─────────────────────────────────────────────────────────
-let siteInfo={name:'',address:'',accNo:'',lat:'',lng:''};
-
-function toggleSetupPanel(){
-  var body=document.getElementById('setupBody');
-  var btn=document.getElementById('setupCollapseBtn');
-  if(!body||!btn) return;
-  var collapsed=body.style.display==='none';
-  body.style.display=collapsed?'block':'none';
-  btn.textContent=collapsed?'\u25b2 Collapse':'\u25bc Expand';
-}
-
-function applySetup(){
-  var sel=document.querySelector('input[name="setupPulse"]:checked');
-  if(sel){
-    PULSE_PER_KWH=parseInt(sel.value);
-    var wh=(1000/PULSE_PER_KWH).toFixed(4).replace(/\.?0+$/,'');
-    document.getElementById('pulseRateLabel').textContent='1 pulse = '+wh+' Wh';
-    var psel=document.getElementById('pulseRateSel');
-    if(psel&&[1000,500,250,100].indexOf(PULSE_PER_KWH)!==-1) psel.value=String(PULSE_PER_KWH);
-    ['1000','500','250','100'].forEach(function(v){
-      var lbl=document.getElementById('pr-lbl-'+v);
-      if(lbl){lbl.style.borderColor=v===String(PULSE_PER_KWH)?'rgba(0,212,170,.4)':'var(--border)';lbl.style.background=v===String(PULSE_PER_KWH)?'rgba(0,212,170,.08)':'';}
-    });
-  }
-  siteInfo.name=(document.getElementById('setupCustomerName')||{value:''}).value.trim();
-  siteInfo.accNo=(document.getElementById('setupAccNo')||{value:''}).value.trim();
-  siteInfo.address=(document.getElementById('setupAddress')||{value:''}).value.trim();
-  var wh2=(1000/PULSE_PER_KWH).toFixed(4).replace(/\.?0+$/,'');
-  if(siteInfo.name) set('logoSub',siteInfo.name+' \u00b7 1 pulse = '+wh2+' Wh \u00b7 TNB tariff July 2025');
-  set('cardName',siteInfo.name||'\u2014');
-  set('cardAddress',siteInfo.address||'\u2014');
-  set('cardAccNo',siteInfo.accNo||'\u2014');
-  set('cardPulse',PULSE_PER_KWH+' pulses = 1 kWh (1 pulse = '+wh2+' Wh)');
-  var card=document.getElementById('siteInfoCard');
-  if(card) card.style.display=(siteInfo.name||siteInfo.address||siteInfo.accNo)?'block':'none';
-  if(allData.length) processText(_lastText);
-  var saved=document.getElementById('setupApplied');
-  if(saved){saved.style.display='inline';setTimeout(function(){saved.style.display='none';},2000);}
-  toggleSetupPanel();
-}
-
-document.addEventListener('change',function(e){
-  if(e.target.name!=='setupPulse') return;
-  ['1000','500','250','100'].forEach(function(v){
-    var lbl=document.getElementById('pr-lbl-'+v);
-    if(lbl){lbl.style.borderColor=v===e.target.value?'rgba(0,212,170,.4)':'var(--border)';lbl.style.background=v===e.target.value?'rgba(0,212,170,.08)':'';}
-  });
-});
-
-
-// ── STOP / RESUME POLLING ─────────────────────────────────────────────────
-function togglePolling(){
-  var btn=document.getElementById('stopResumeBtn');
-  if(intervalId){
-    clearInterval(intervalId);
-    intervalId=null;
-    if(btn){btn.textContent='▶ Resume';btn.style.borderColor='rgba(0,212,170,.4)';btn.style.color='var(--accent)';}
-    setLive('PAUSED',false);
-    set('fileStatus','Paused');
-  } else {
-    startPolling();
-    if(btn){btn.textContent='⏹ Stop';btn.style.borderColor='rgba(239,68,68,.4)';btn.style.color='#f87171';}
-    setLive('LIVE',true);
-  }
-}
-
-// ── BUCKET DETAIL TABLE ───────────────────────────────────────────────────
-var PAGE_ROWS=25;
-var filtered=[];
-var tablePageNum=0;
-
-function applyFilter(){
-  var q=(document.getElementById('filterInput')||{value:''}).value.toLowerCase();
-  var pf=(document.getElementById('pulseFilter')||{value:'all'}).value;
-  var hf=(document.getElementById('hiFilter')||{value:'all'}).value;
-  var df=(document.getElementById('dateFilter')||{value:'all'}).value;
-  var rev=document.getElementById('latestFirst') ? document.getElementById('latestFirst').checked : true;
-  var threshold=calcUnusualThreshold(allData);
-  filtered=allData.filter(function(r){
-    var mQ=!q||String(r.date||'').includes(q)||String(r.rtc||'').includes(q)||String(r.HI).includes(q)||String(r.p).includes(q);
-    var mP=pf==='all'||(pf==='active'&&r.p>0)||(pf==='zero'&&r.p===0)||(pf==='unusual'&&r.p>threshold)||(pf==='peak'&&r.isPeak)||(pf==='offpeak'&&!r.isPeak);
-    var mH=hf==='all'||String(r.HI)===hf;
-    var mD=df==='all'||r.date===df;
-    return mQ&&mP&&mH&&mD;
-  });
-  if(rev) filtered=filtered.slice().reverse();
-  tablePageNum=0;
-  // Refresh HI dropdown
-  var hiVals=[...new Set(allData.map(function(r){return r.HI;}))].sort(function(a,b){return a-b;});
-  var hiSel=document.getElementById('hiFilter');
-  if(hiSel){var c=hiSel.value;hiSel.innerHTML='<option value="all">All HI</option>'+hiVals.map(function(v){return '<option value="'+v+'"'+(c==v?' selected':'')+'>'+v+'</option>';}).join('');}
-  // Refresh date dropdown
-  var dates=[...new Set(allData.map(function(r){return r.date;}).filter(Boolean))];
-  var dSel=document.getElementById('dateFilter');
-  if(dSel){var c2=dSel.value;dSel.innerHTML='<option value="all">All dates</option>'+dates.map(function(v){return '<option value="'+v+'"'+(c2===v?' selected':'')+'>'+v+'</option>';}).join('');}
-  renderTable();
-}
-
-function renderTable(){
-  var threshold=calcUnusualThreshold(allData);
-  var rev=document.getElementById('latestFirst') ? document.getElementById('latestFirst').checked : true;
-  var slice=filtered.slice(tablePageNum*PAGE_ROWS,(tablePageNum+1)*PAGE_ROWS);
-  var tbody=document.getElementById('tableBody');
-  if(!tbody) return;
-  tbody.innerHTML=slice.map(function(r,si){
-    var origIdx=allData.indexOf(r);
-    var dH=r.date?'<span class="pill p-date">'+r.date+'</span>':'<span class="pill p-none">—</span>';
-    var rH=r.rtc?'<span class="pill p-rtc">'+r.rtc+'</span>':'<span class="pill p-none">—</span>';
-    var lH=r.log_ts?'<span style="color:var(--accent);font-size:10px;font-family:var(--mono);">'+r.log_ts+'</span>':'<span style="color:var(--muted);font-size:10px;">—</span>';
-    var pC=r.p>threshold?'p-unusual':r.p>0?'p-pulse':'p-zero';
-    var perH=r.isPeak?'<span class="pill p-peak">Peak</span>':'<span class="pill p-off">Off</span>';
-    var flagH=r.p>threshold?'<span class="pill p-unusual">⚠</span>':'<span style="color:var(--muted);font-size:10px;">—</span>';
-    var flash=(si<3&&tablePageNum===0&&rev)?'flash':'';
-    var unusual=r.p>threshold?'unusual-row':'';
-    return '<tr class="'+flash+' '+unusual+'">'
-      +'<td style="color:var(--muted);">'+(origIdx+1)+'</td>'
-      +'<td>'+dH+'</td><td>'+rH+'</td><td>'+lH+'</td>'
-      +'<td><span class="pill p-hi">'+r.HI+'</span></td>'
-      +'<td><span class="pill p-lo">'+r.LO+'</span></td>'
-      +'<td style="color:var(--muted);">'+r.hw+'</td>'
-      +'<td style="color:'+(r.d>0?'var(--warn)':'var(--muted)')+';">'+r.d+'</td>'
-      +'<td><span class="pill '+pC+'">'+r.p+'</span></td>'
-      +'<td><span class="pill p-kwh">'+r.wh.toFixed(0)+'Wh</span></td>'
-      +'<td style="color:var(--muted);font-size:10px;">'+r.kwhTotal.toFixed(4)+'</td>'
-      +'<td>'+perH+'</td>'
-      +'<td>'+flagH+'</td>'
-      +'<td style="color:var(--muted);">'+r.t+'s</td>'
-      +'</tr>';
-  }).join('');
-  var total=Math.ceil(filtered.length/PAGE_ROWS);
-  set('rowCount',filtered.length+' rows');
-  var pg=document.getElementById('pagination');
-  if(pg){
-    pg.innerHTML='';
-    if(total<=1) return;
-    var mk=function(lbl,t,active){
-      var b=document.createElement('button');
-      b.className='pg-btn'+(active?' active':'');
-      b.textContent=lbl;
-      b.onclick=function(){tablePageNum=t;renderTable();};
-      pg.appendChild(b);
-    };
-    if(tablePageNum>0) mk('‹',tablePageNum-1,false);
-    var s=Math.max(0,tablePageNum-2),e=Math.min(total,s+5);
-    for(var i=s;i<e;i++) mk(i+1,i,i===tablePageNum);
-    if(tablePageNum<total-1) mk('›',tablePageNum+1,false);
-  }
-}
 </script>
+
+
+</body>
+</html>
