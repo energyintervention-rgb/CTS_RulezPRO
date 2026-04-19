@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0e14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CTS Rulez">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="manifest" href="manifest.json">
+<title>CTS Rulez — Energy Eye Live Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e14;--surface:#111720;--surface2:#161d28;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e8edf3;--muted:#5a6a7e;
+  --accent:#00d4aa;--accent2:#3b82f6;
+  --warn:#f59e0b;--danger:#ef4444;--success:#10b981;
+  --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,170,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:20px 20px 60px;}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.logo-text{font-size:16px;font-weight:600;letter-spacing:-.3px;}
+.logo-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+.hdr-right{display:flex;align-items:center;gap:6px;}
+.live-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-family:var(--mono);background:rgba(0,212,170,.1);color:var(--accent);border:1px solid rgba(0,212,170,.25);padding:0 10px;height:32px;border-radius:20px;white-space:nowrap;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1.4s ease-in-out infinite;}
+.live-dot.off{background:var(--muted);animation:none;}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.8);}}
+.btn{background:var(--accent);color:#000;border:none;border-radius:7px;padding:0 13px;height:32px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:opacity .15s;display:inline-flex;align-items:center;white-space:nowrap;}
+.btn:hover{opacity:.85;}
+.btn-ghost{background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:7px;padding:0 13px;height:32px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .15s;display:inline-flex;align-items:center;white-space:nowrap;}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.sel{background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:0 8px;height:32px;font-size:11px;font-family:var(--mono);cursor:pointer;}
+
+/* status bar */
+.sbar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px;font-family:var(--mono);font-size:11px;flex-wrap:wrap;}
+.sbar span{color:var(--muted);}.sbar strong{color:var(--text);margin-left:3px;}.sep{color:var(--border2);}
+#lastUpdate{color:var(--accent);}#fileStatus{color:var(--muted);font-style:italic;}
+
+/* time filter */
+.tfilter{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.tfilter-label{font-size:11px;color:var(--muted);font-family:var(--mono);}
+#sliderFrom::-webkit-slider-thumb,#sliderTo::-webkit-slider-thumb{appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);cursor:pointer;box-shadow:0 0 0 2px rgba(0,212,170,.3);}
+#sliderFrom::-moz-range-thumb,#sliderTo::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);cursor:pointer;}
+.tf-btn{background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;font-family:var(--mono);cursor:pointer;transition:all .15s;}
+.tf-btn:hover{border-color:var(--border2);color:var(--text);}
+.tf-btn.active{background:rgba(0,212,170,.15);color:var(--accent);border-color:rgba(0,212,170,.4);font-weight:700;}
+.peak-badge{font-size:10px;font-family:var(--mono);background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.25);padding:4px 10px;border-radius:6px;margin-left:auto;}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;margin-bottom:12px;}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;}
+.mc.unusual{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.04);}
+.mc-label{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.mc-val{font-size:20px;font-weight:600;font-family:var(--mono);line-height:1;}
+.mc-sub{font-size:10px;color:var(--muted);margin-top:4px;font-family:var(--mono);}
+.green{color:var(--success);}.blue{color:var(--accent2);}.amber{color:var(--warn);}.teal{color:var(--accent);}.red{color:var(--danger);}
+
+/* tariff comparison */
+.tariff-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.tariff-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.tariff-card.tou{border-color:rgba(0,212,170,.3);}
+.tariff-title{font-size:12px;font-weight:600;font-family:var(--mono);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.tariff-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-family:var(--mono);}
+.tb-gen{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);}
+.tb-tou{background:rgba(0,212,170,.15);color:#00d4aa;border:1px solid rgba(0,212,170,.3);}
+.tariff-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.tg-item{background:var(--surface2);border-radius:6px;padding:8px 10px;}
+.tg-label{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;}
+.tg-val{font-size:16px;font-weight:600;font-family:var(--mono);}
+.tg-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.saving-banner{margin-top:10px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:8px 12px;font-size:11px;font-family:var(--mono);color:var(--success);}
+
+/* summary card */
+.summary-section{margin-bottom:12px;}
+.summary-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.sum-btn{background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:5px 14px;font-size:11px;font-family:var(--mono);cursor:pointer;transition:all .15s;}
+.sum-btn:hover{border-color:var(--border2);color:var(--text);}
+.sum-btn.active{background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.4);font-weight:700;}
+.summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;}
+.sg-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;}
+.sg-label{font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;}
+.sg-val{font-size:18px;font-weight:600;font-family:var(--mono);}
+.sg-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:3px;}
+
+/* charts */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px;}
+.energy-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:10px;}
+canvas{background:transparent !important;}
+.card-title{font-size:11px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;}
+.legend{display:flex;gap:10px;font-size:10px;font-family:var(--mono);color:var(--muted);flex-wrap:wrap;}
+.legend span{display:flex;align-items:center;gap:4px;}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+
+/* unusual alert */
+.alert-card{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:11px 14px;margin-bottom:10px;display:none;}
+.alert-card.show{display:block;}
+.alert-title{font-size:12px;font-weight:600;color:#f87171;font-family:var(--mono);display:flex;align-items:center;justify-content:space-between;}
+.alert-list{margin-top:8px;max-height:152px;overflow-y:auto;}
+.alert-list::-webkit-scrollbar{width:4px;}
+.alert-list::-webkit-scrollbar-thumb{background:rgba(239,68,68,.3);border-radius:2px;}
+.alert-row{font-size:11px;font-family:var(--mono);color:var(--text);padding:4px 0;border-bottom:1px solid rgba(239,68,68,.12);}
+.alert-row:last-child{border-bottom:none;}
+
+/* table */
+.table-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px;}
+.tcontrols{display:flex;align-items:center;gap:8px;margin:8px 0 10px;flex-wrap:wrap;}
+.t-input{background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:5px 9px;font-size:11px;font-family:var(--mono);width:180px;}
+.t-input::placeholder{color:var(--muted);}
+.t-sel{background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:5px 9px;font-size:11px;font-family:var(--mono);}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;}
+th{text-align:left;padding:6px 8px;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border2);white-space:nowrap;}
+td{padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+tr.flash td{animation:flashRow 1.4s ease-out;}
+tr.unusual-row td{background:rgba(239,68,68,.04);}
+@keyframes flashRow{0%{background:rgba(0,212,170,.18);}100%{background:transparent;}}
+.pill{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;font-family:var(--mono);}
+.p-hi{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);}
+.p-lo{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);}
+.p-pulse{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3);}
+.p-zero{background:rgba(90,106,126,.12);color:var(--muted);border:1px solid var(--border);}
+.p-date{background:rgba(0,212,170,.1);color:#00d4aa;border:1px solid rgba(0,212,170,.25);}
+.p-rtc{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.25);}
+.p-none{background:rgba(90,106,126,.1);color:var(--muted);border:1px solid var(--border);font-style:italic;}
+.p-unusual{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.4);}
+.p-kwh{background:rgba(59,130,246,.1);color:#60a5fa;border:1px solid rgba(59,130,246,.25);}
+.p-rm{background:rgba(16,185,129,.1);color:#34d399;border:1px solid rgba(16,185,129,.25);}
+.p-peak{background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.25);}
+.p-off{background:rgba(90,106,126,.12);color:var(--muted);border:1px solid var(--border);}
+.pagination{display:flex;align-items:center;gap:5px;margin-top:8px;}
+.pg-btn{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:3px 8px;font-size:11px;font-family:var(--mono);cursor:pointer;transition:all .15s;}
+.pg-btn:hover{border-color:var(--border2);color:var(--text);}
+.pg-btn.active{background:rgba(0,212,170,.15);color:var(--accent);border-color:rgba(0,212,170,.35);}
+.row-count{font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;}
+
+/* splash */
+#splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:100;transition:opacity .4s;}
+#splash.hidden{opacity:0;pointer-events:none;}
+body:has(#splash:not(.hidden)) #dsp-fab{display:none!important;}
+.splash-btn{background:var(--accent);color:#000;border:none;border-radius:10px;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--sans);}
+
+/* print */
+@media print{
+  body{background:#fff;color:#000;}
+  body::before{display:none;}
+  #splash,header .hdr-right,.tfilter .peak-badge,.btn,.btn-ghost,#alertCard,.tcontrols,.pagination,#summaryPrintBtn{display:none!important;}
+  .wrap{padding:0;}
+  .sbar,.tfilter{border:1px solid #ccc;background:#f9f9f9;}
+  .mc,.tariff-card,.sg-card,.chart-card,.energy-chart-card,.table-card,.summary-section{border:1px solid #ddd;background:#fff;}
+  .mc-val,.sg-val,.tg-val{color:#000;}
+  .mc-label,.sg-label,.tg-label,.card-title{color:#555;}
+  table{font-size:10px;}
+  td,th{color:#000;border-color:#ddd;}
+  .pill{border:1px solid #999;background:#f0f0f0;color:#333;}
+}
+@media screen and (max-width:599px) and (orientation:portrait){
+  .wrap{padding:8px 8px 90px;}
+  header{flex-wrap:wrap;gap:5px;padding-bottom:8px;}
+  .logo{flex:1;min-width:0;}
+  .logo-text{font-size:13px;}
+  .logo-sub{font-size:9px;white-space:normal;}
+  .hdr-right{width:100%;flex-wrap:wrap;gap:4px;}
+  .hdr-right .sel,.hdr-right .btn,.hdr-right .btn-ghost{font-size:10px;padding:0 8px;height:28px;}
+  .live-badge{height:28px;font-size:10px;padding:0 8px;}
+  #dsp-fab-btn{font-size:10px!important;height:28px!important;padding:0 8px!important;}
+  .sbar{font-size:10px;flex-direction:column;gap:2px;padding:6px 10px;}
+  .sbar>.sep{display:none;}
+  .tf-btn{padding:4px 8px;font-size:10px;}
+  .peak-badge{font-size:9px;padding:3px 8px;margin-left:0;width:100%;text-align:center;box-sizing:border-box;}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+  .mc{padding:8px 10px;}
+  .mc-val{font-size:18px;}
+  .mc-label,.mc-sub{font-size:9px;}
+  .charts-row{grid-template-columns:1fr;}
+  .card-title{font-size:10px;flex-direction:column;align-items:flex-start;gap:3px;}
+  .legend{font-size:9px;gap:5px;}
+  #tariffGrid{grid-template-columns:1fr!important;}
+  #costGrid{grid-template-columns:1fr!important;}
+  #tariffInfoCard{overflow-x:auto;}
+  #tariffInfoCard table{font-size:10px;min-width:280px;}
+  .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+  .sg-card{padding:8px;}
+  .sg-val{font-size:15px;}
+  .sg-label,.sg-sub{font-size:9px;}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{font-size:10px;}
+  th{font-size:9px;padding:4px 5px;}
+  td{padding:4px 5px;}
+  .tcontrols{flex-wrap:wrap;gap:5px;}
+  .t-input{width:110px;font-size:10px;}
+  .t-sel{font-size:10px;}
+  #dsp-panel{width:100vw!important;}
+  [id^='tr-'],[id^='ph-']{font-size:10px;padding:4px 8px;}
+}
+@media screen and (min-width:600px) and (max-width:900px) and (orientation:portrait){
+  .metrics{grid-template-columns:repeat(4,minmax(0,1fr));}
+  .charts-row{grid-template-columns:1fr;}
+  .wrap{padding:14px;}
+}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" rx="18" fill="#1a2550"/><text x="48" y="57" font-family="Arial Black,Arial,sans-serif" font-size="34" font-weight="900" fill="white" text-anchor="middle">CTS</text><circle cx="10" cy="32" r="5" fill="none" stroke="#6abf4b" stroke-width="3.5"/></svg>
+  <div style="font-size:20px;font-weight:600;">CTS Rulez — Energy Eye Live Dashboard</div>
+  <button class="splash-btn" onclick="pickFile()">Select teraterm.log</button>
+</div>
+
+
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <div class="logo-icon"><svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="36" height="36" rx="8" fill="#1a2550"/><text x="22" y="27" font-family="Arial Black,Arial,sans-serif" font-size="15" font-weight="900" fill="white" text-anchor="middle">CTS</text><circle cx="5" cy="14" r="2.2" fill="none" stroke="#6abf4b" stroke-width="1.8"/></svg></div>
+      <div>
+        <div class="logo-text">CTS Rulez — Energy Eye Live</div>
+        <div class="logo-sub" id="logoSub">energy-test-001 · 1 pulse = 1 Wh · TNB tariff July 2025</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <select class="sel" id="intervalSel" onchange="changeInterval()">
+        <option value="3000">Refresh: 3s</option>
+        <option value="5000">Refresh: 5s</option>
+        <option value="10000">Refresh: 10s</option>
+        <option value="30000">Refresh: 30s</option>
+      </select>
+      <button id="stopResumeBtn" class="btn-ghost" onclick="togglePolling()" style="border-color:rgba(239,68,68,.4);color:#f87171;">&#9209; Stop</button>
+      <div class="live-badge"><div class="live-dot off" id="liveDot"></div><span id="liveLabel">WAITING</span></div>
+      <button class="btn-ghost" onclick="savePDF()" title="Save as PDF">🖨</button>
+      <button class="btn" onclick="pickFile()">Change file</button>
+    </div>
+  </header>
+
+  <!-- INLINE SETUP PANEL -->
+  <div id="setupPanel" style="background:var(--surface);border:1px solid rgba(0,212,170,.3);border-radius:10px;padding:16px 18px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:13px;font-weight:600;color:var(--text);">&#9889; Setup</div>
+      <button onclick="toggleSetupPanel()" id="setupCollapseBtn" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:3px 12px;font-size:11px;font-family:var(--mono);cursor:pointer;">&#9650; Collapse</button>
+    </div>
+    <div id="setupBody">
+      <div style="font-size:10px;font-weight:600;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">1 &middot; Pulse Rate</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px;">
+        <label id="pr-lbl-1000" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid rgba(0,212,170,.4);background:rgba(0,212,170,.08);"><input type="radio" name="setupPulse" value="1000" checked style="accent-color:var(--accent);"><div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--accent);">1000 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 1 Wh</div></div></label>
+        <label id="pr-lbl-500" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);"><input type="radio" name="setupPulse" value="500" style="accent-color:var(--accent);"><div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">500 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 2 Wh</div></div></label>
+        <label id="pr-lbl-250" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);"><input type="radio" name="setupPulse" value="250" style="accent-color:var(--accent);"><div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">250 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 4 Wh</div></div></label>
+        <label id="pr-lbl-100" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:7px 10px;border-radius:7px;border:1px solid var(--border);"><input type="radio" name="setupPulse" value="100" style="accent-color:var(--accent);"><div><div style="font-size:11px;font-family:var(--mono);font-weight:600;color:var(--text);">100 p/kWh</div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);">1 pulse = 10 Wh</div></div></label>
+      </div>
+      <div style="font-size:10px;font-weight:600;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;">2 &middot; Customer / Site Info</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;">
+        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">Customer Name</div><input id="setupCustomerName" type="text" placeholder="e.g. Ahmad bin Ali" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--sans);"></div>
+        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">TNB Account No.</div><input id="setupAccNo" type="text" placeholder="e.g. 7100012345678" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--mono);"></div>
+        <div style="grid-column:span 2;"><div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">Site Address</div><input id="setupAddress" type="text" placeholder="e.g. No. 12, Jalan Maju, 55100 KL" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;font-family:var(--sans);"></div>
+      </div>
+      <button onclick="applySetup()" style="background:var(--accent);color:#000;border:none;border-radius:7px;padding:8px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--sans);">&#10003; Apply</button>
+      <span id="setupApplied" style="font-size:11px;color:var(--success);font-family:var(--mono);margin-left:10px;display:none;">&#10003; Saved</span>
+    </div>
+  </div>
+  <!-- site info summary -->
+  <div id="siteInfoCard" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;gap:24px;flex-wrap:wrap;flex:1;">
+        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Customer</div><div id="cardName" style="font-size:13px;font-weight:600;color:var(--text);">&#8212;</div></div>
+        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Address</div><div id="cardAddress" style="font-size:12px;color:var(--text);max-width:300px;line-height:1.4;">&#8212;</div></div>
+        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">TNB Acc No.</div><div id="cardAccNo" style="font-size:12px;font-family:var(--mono);color:var(--accent);">&#8212;</div></div>
+        <div id="cardGpsWrap" style="display:none;"><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">GPS</div><a id="cardGps" href="#" target="_blank" style="font-size:11px;font-family:var(--mono);color:#60a5fa;text-decoration:none;">&#8212;</a></div>
+        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Pulse Rate</div><div id="cardPulse" style="font-size:12px;font-family:var(--mono);color:var(--accent);">&#8212;</div></div>
+        <div><div style="font-size:10px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Device</div>
+          <div id="cardDeviceStatus" onclick="cardDeviceClick()" style="margin-top:2px;cursor:pointer;">
+            <span id="cardDevicePill" style="display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:3px 9px;font-size:11px;font-family:var(--mono);background:rgba(90,106,126,.15);color:#5a6a7e;border:1px solid rgba(90,106,126,.2);">
+              <span id="cardDeviceDot" style="width:7px;height:7px;border-radius:50%;background:#5a6a7e;display:inline-block;"></span>
+              <span id="cardDeviceLabel">&#8212;</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      <button onclick="toggleSetupPanel()" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;font-size:10px;font-family:var(--mono);cursor:pointer;white-space:nowrap;">&#9999; Edit</button>
+    </div>
+  </div>
+  <!-- DEVICE STATUS inline card -->
+  <div id="deviceStatusCard" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;">
+    <div style="background:var(--surface2);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">
+      <span style="font-size:11px;font-family:var(--mono);color:var(--text);font-weight:600;letter-spacing:.05em;">DEVICE STATUS</span>
+      <span id="dsp-updated" style="color:var(--muted);font-size:10px;font-family:var(--mono);">&#8212;</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--border);">
+      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">MODEM</div><div id="dsp-modem" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
+      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">SIM</div><div id="dsp-sim" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
+      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">LAST TX</div><div id="dsp-tx" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
+      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">BATTERY</div><div id="dsp-batt" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
+      <div style="padding:8px 12px;border-right:1px solid var(--border);"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">CLOCK SYNC</div><div id="dsp-cclk" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
+      <div style="padding:8px 12px;"><div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">TX CYCLES</div><div id="dsp-cycles" style="color:var(--muted);font-size:12px;font-family:var(--mono);">&#8212;</div></div>
+    </div>
+    <div style="padding:10px 14px;">
+      <div style="color:var(--muted);font-size:9px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">RECENT EVENTS</div>
+      <div id="dsp-events" style="display:flex;flex-direction:column;gap:2px;max-height:180px;overflow-y:auto;"></div>
+      <div id="dsp-no-events" style="color:var(--muted);font-size:10px;font-family:var(--mono);padding:4px 0;">Load a log file to see device events.</div>
+    </div>
+  </div>
+
+  <div class="sbar">
+    <span>File:<strong id="fileName">—</strong></span><span class="sep">|</span>
+    <span>Size:<strong id="fileSize">—</strong></span><span class="sep">|</span>
+    <span>Date:<strong id="logDate">—</strong> <span id="dateSource" title="RTC time source" style="font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:4px;background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.2);">⚠️ PC Clock</span></span><span class="sep">|</span>
+    <span>Buckets:<strong id="bucketCount">—</strong></span><span class="sep">|</span>
+    <span>Last read:<strong id="lastUpdate">—</strong></span><span class="sep">|</span>
+    <span style="display:flex;align-items:center;gap:6px;">
+      Pulse rate:
+      <select id="pulseRateSel" onchange="setPulseRate(this.value)" style="background:var(--surface2);color:var(--accent);border:1px solid rgba(0,212,170,.3);border-radius:5px;padding:2px 6px;font-size:11px;font-family:var(--mono);cursor:pointer;">
+        <option value="1000">1000 pulses = 1 kWh</option>
+        <option value="500">500 pulses = 1 kWh</option>
+        <option value="250">250 pulses = 1 kWh</option>
+        <option value="100">100 pulses = 1 kWh</option>
+        <option value="custom">Custom…</option>
+      </select>
+      <span id="pulseRateLabel" style="color:var(--accent);font-weight:500;">1 pulse = 1 Wh</span>
+    </span><span class="sep">|</span>
+    <span id="fileStatus">No file selected</span>
+  </div>
+
+  <!-- unusual alert — last 15 min, peak only, max 5 rows -->
+  <div class="alert-card" id="alertCard">
+    <div class="alert-title">
+      <span>⚠ Unusual pulse activity — last 15 min (all periods)</span>
+      <button id="alertToggleBtn" onclick="
+        const b=document.getElementById('alertBody');
+        const hidden=b.style.display==='none';
+        b.style.display=hidden?'block':'none';
+        this.textContent=hidden?'Hide ▲':'Show ▼';
+      " style="background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);border-radius:5px;padding:2px 10px;font-size:10px;font-family:var(--mono);cursor:pointer;">Hide ▲</button>
+    </div>
+    <div id="alertBody">
+      <div id="alertSummary" style="display:flex;gap:10px;margin:8px 0;flex-wrap:wrap;"></div>
+      <div style="overflow-x:auto;overflow-y:auto;max-height:175px;">
+        <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(239,68,68,.25);">
+              <th style="text-align:left;padding:5px 8px;color:#f87171;font-size:10px;">Time (MYT)</th>
+              <th style="text-align:left;padding:5px 8px;color:#f87171;font-size:10px;">Log TS</th>
+              
+              <th style="text-align:right;padding:5px 8px;color:#f87171;font-size:10px;">Pulse</th>
+              <th style="text-align:right;padding:5px 8px;color:#f87171;font-size:10px;">Energy (Wh)</th>
+              <th style="text-align:right;padding:5px 8px;color:#f87171;font-size:10px;">Period</th>
+              <th style="text-align:right;padding:5px 8px;color:#f87171;font-size:10px;">HI</th>
+              <th style="text-align:right;padding:5px 8px;color:#f87171;font-size:10px;">LO</th>
+            </tr>
+          </thead>
+          <tbody id="alertTableBody"></tbody>
+        </table>
+      </div>
+      <div id="alertMore" style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:6px;display:none;"></div>
+    </div>
+  </div>
+
+  <!-- pulse + HI/LO row -->
+  <div class="charts-row">
+    <div class="chart-card">
+      <div class="card-title">
+        <span>Pulse count + HI / LO thresholds</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="legend">
+            <span><span class="leg-dot" style="background:#10b981;"></span>Pulses</span>
+            <span><span class="leg-dot" style="background:#ef4444;"></span>HI</span>
+            <span><span class="leg-dot" style="background:#3b82f6;"></span>LO</span>
+          </div>
+          <span style="font-size:10px;color:var(--muted);font-family:var(--mono);">scroll · drag</span>
+          <button onclick="if(mainChart){mainChart.resetZoom();}" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border2);border-radius:5px;padding:2px 9px;font-size:10px;font-family:var(--mono);cursor:pointer;">Reset</button>
+        </div>
+      </div>
+      <div style="position:relative;height:170px;"><canvas id="mainChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-title"><span>HI distribution</span></div>
+      <div style="position:relative;height:170px;"><canvas id="hiDistChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- bucket detail -->
+  <div class="table-card" style="margin-top:10px;">
+    <div class="card-title" style="margin-bottom:0;"><span>Bucket Detail &mdash; Date &middot; RTC (MYT) &middot; HI &middot; LO &middot; Pulse &middot; Energy</span></div>
+    <div class="tcontrols">
+      <input class="t-input" id="filterInput" type="text" placeholder="Search date, RTC, HI, pulse&hellip;" oninput="applyFilter()">
+      <select class="t-sel" id="pulseFilter" onchange="applyFilter()">
+        <option value="all">All buckets</option>
+        <option value="active">Pulse &gt; 0</option>
+        <option value="zero">No pulse</option>
+        <option value="unusual">Unusual only</option>
+        <option value="peak">Peak hours</option>
+        <option value="offpeak">Off-peak</option>
+      </select>
+      <select class="t-sel" id="hiFilter" onchange="applyFilter()"><option value="all">All HI</option></select>
+      <select class="t-sel" id="dateFilter" onchange="applyFilter()"><option value="all">All dates</option></select>
+      <label style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-left:auto;display:flex;align-items:center;gap:5px;">
+        <input type="checkbox" id="latestFirst" checked onchange="applyFilter()"> Latest first
+      </label>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Date</th><th>RTC (MYT)</th><th>Log TS</th>
+          <th>HI</th><th>LO</th><th>hw</th><th>d</th>
+          <th>Pulse</th><th>Wh</th><th>kWh Total</th>
+          <th>Period</th><th>Flag</th><th>Dur</th>
+        </tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+      <div class="pagination" id="pagination"></div>
+      <div class="row-count" id="rowCount"></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html><script>
+
+// Global uncaught error handler — prevents silent crashes
+window.onerror = function(msg, src, line, col, err){
+  if(typeof logCrash === 'function') logCrash('uncaught@'+line, err||{message:msg});
+  return false; // don't suppress
+};
+window.onunhandledrejection = function(e){
+  if(typeof logCrash === 'function') logCrash('promise', e.reason);
+};
+// ── global Chart.js background fix ────────────────────────────────────
+Chart.defaults.backgroundColor='#111720';
+Chart.defaults.plugins.legend.display=false;
+
+// Force chart area background to match card surface on every render
+const _chartBgPlugin={
+  id:'chartBg',
+  beforeDatasetsDraw(chart){
+    const{ctx,chartArea:a}=chart;
+    if(!a)return;
+    ctx.save();
+    ctx.fillStyle='#111720';
+    ctx.fillRect(a.left,a.top,a.width,a.height);
+    ctx.restore();
+  }
+};
+Chart.register(_chartBgPlugin);
+
+// ── TNB Tariff July 2025 ─────────────────────────────────────────────
+const TNB = {
+  // General Tariff (all hours same rate)
+  gen: { lo: 0.2703, hi: 0.3703 },     // sen/kWh energy only
+  // Fixed charges same for both
+  capacity: 0.0455, network: 0.1285,    // sen/kWh
+  retail: 10.00,                         // RM/month
+  // ToU tariff
+  tou: {
+    peak: { lo: 0.2852, hi: 0.3852 },   // 14:00-22:00 weekdays
+    offpeak: { lo: 0.2443, hi: 0.3443 } // all other times
+  },
+  THRESHOLD_KWH: 1.5                     // 1.5 kWh = 1500 kWh/month threshold
+};
+
+// per-kWh total: energy + capacity + network
+function genRate(kwh){ return (kwh>TNB.THRESHOLD_KWH?TNB.gen.hi:TNB.gen.lo)+TNB.capacity+TNB.network; }
+function touRate(kwh,isPeak){ const r=kwh>TNB.THRESHOLD_KWH?TNB.tou[isPeak?'peak':'offpeak'].hi:TNB.tou[isPeak?'peak':'offpeak'].lo; return r+TNB.capacity+TNB.network; }
+function calcCostRM(kwh, isPeak, tariff){
+  if(tariff==='gen') return kwh * genRate(kwh);
+  return kwh * touRate(kwh, isPeak);
+}
+
+// ── constants ─────────────────────────────────────────────────────────
+let PULSE_PER_KWH=1000;  // configurable — 1 pulse = 1 Wh by default
+const PEAK_START=14, PEAK_END=22;
+
+function calcUnusualThreshold(data){
+  const ps=data.map(r=>r.p).filter(p=>p>0);
+  if(!ps.length)return 3;
+  const mean=ps.reduce((a,b)=>a+b,0)/ps.length;
+  const std=Math.sqrt(ps.reduce((s,p)=>s+(p-mean)**2,0)/ps.length);
+  return Math.max(3,Math.round(mean+2*std));
+}
+
+// ── state ─────────────────────────────────────────────────────────────
+let fileHandle=null,allData=[];
+let intervalId=null,intervalMs=3000;
+let timeFilterMin='all',summaryPeriod='1month';
+let energyChart=null,mainChart=null,hiDistChart=null,kwhStackChart=null;
+
+// load any existing history on startup
+window.addEventListener('load',()=>{
+  // clear old localStorage history to free quota space
+  try{
+    const dates=JSON.parse(localStorage.getItem('ee_history_dates')||'[]');
+    dates.forEach(d=>localStorage.removeItem('ee_hist_'+d));
+    localStorage.removeItem('ee_history_dates');
+  }catch(e){}
+});
+
+// ── file ──────────────────────────────────────────────────────────────
+let _pendingText=null, _pendingFile=null;
+
+async function pickFile(){
+  try{
+    if(window.showOpenFilePicker){
+      const[h]=await window.showOpenFilePicker({types:[{description:'Log',accept:{'text/plain':['.log','.txt']}}],multiple:false});
+      fileHandle=h;set('fileName',h.name);
+      document.getElementById('splash').classList.add('hidden');
+      setLive('LIVE',true);await readAndRender();startPolling();
+    } else {
+      const inp=document.createElement('input');inp.type='file';inp.accept='.log,.txt';
+      inp.onchange=async e=>{
+        const file=e.target.files[0];if(!file)return;
+        set('fileName',file.name);set('fileSize',fmtBytes(file.size));
+        document.getElementById('splash').classList.add('hidden');
+        const text=await file.text();
+        setLive('STATIC',false);set('fileStatus','Loaded (static)');processText(text);
+      };inp.click();
+    }
+  }catch(e){if(e.name!=='AbortError')set('fileStatus','Error: '+e.message);}
+}
+
+
+// store setup info globally
+
+
+
+function setLive(l,a){
+  set('liveLabel',l);
+  const dot=document.getElementById('liveDot');
+  dot.classList.toggle('off',!a);
+  dot.style.background=l==='STALE'?'#f59e0b':l==='PAUSED'?'var(--muted)':'var(--accent)';
+}
+function changeInterval(){intervalMs=parseInt(document.getElementById('intervalSel').value);if(fileHandle){clearInterval(intervalId);startPolling();}}
+// ── CRASH PROTECTION ─────────────────────────────────────────────────
+let _crashLog=[], _crashCount=0, _lastCrashTime=0;
+function logCrash(src, err){
+  const now=new Date();
+  const msg=`[${now.toLocaleTimeString()}] ${src}: ${err?.message||String(err)}`;
+  _crashLog.unshift(msg);
+  if(_crashLog.length>20) _crashLog.pop();
+  _crashCount++;
+  _lastCrashTime=Date.now();
+  console.error('EnergyEye crash:', msg, err);
+  // show crash count in header
+  let el=document.getElementById('crashBadge');
+  if(!el){
+    el=document.createElement('span');
+    el.id='crashBadge';
+    el.style='font-size:10px;font-family:var(--mono);color:#f87171;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:2px 8px;cursor:pointer;margin-left:6px;';
+    el.title='Click to see error log';
+    el.onclick=()=>showCrashLog();
+    const hdr=document.querySelector('.header-controls');
+    if(hdr) hdr.insertBefore(el, hdr.firstChild);
+  }
+  el.textContent=`⚠ ${_crashCount} error${_crashCount>1?'s':''}`;
+}
+function showCrashLog(){
+  alert('Error log (latest first):\n\n'+_crashLog.join('\n'));
+}
+
+// watchdog: if polling stops unexpectedly, restart it
+let _watchdogTimer=null;
+function resetWatchdog(){
+  clearTimeout(_watchdogTimer);
+  if(!intervalId) return;
+  _watchdogTimer=setTimeout(()=>{
+    if(fileHandle && intervalId){
+      logCrash('watchdog','Polling stalled — restarting');
+      startPolling();
+    }
+  }, intervalMs*5 + 10000); // 5 missed polls + 10s grace
+}
+
+function startPolling(){
+  clearInterval(intervalId);
+  intervalId=setInterval(()=>{
+    readAndRender().catch(e=>logCrash('readAndRender',e));
+    resetWatchdog();
+  }, intervalMs);
+  resetWatchdog();
+}
+let _lastFileBytes=0,_lastFileBytesTime=0;
+
+async function readAndRender(){
+  if(!fileHandle)return;
+  try{
+    const file=await fileHandle.getFile();
+    const nowMs2=Date.now();
+    set('fileSize',fmtBytes(file.size));
+    if(file.size!==_lastFileBytes){
+      _lastFileBytes=file.size;
+      _lastFileBytesTime=nowMs2;
+      if(document.getElementById('liveLabel')?.textContent==='STALE'){
+        setLive('LIVE',true);
+        set('fileStatus','Live · polling every '+(intervalMs/1000)+'s');
+      }
+    } else if(nowMs2-_lastFileBytesTime>120000){
+      const mins=Math.floor((nowMs2-_lastFileBytesTime)/60000);
+      set('fileStatus','⚠ No new data for '+mins+'m — TeraTerm may have stopped');
+      setLive('STALE',false);
+    }
+    const text=await file.text();
+    processText(text);
+    set('lastUpdate',new Date().toLocaleTimeString());
+    if(document.getElementById('liveLabel')?.textContent!=='STALE')
+      set('fileStatus','Live · polling every '+(intervalMs/1000)+'s');
+    }catch(e){
+    logCrash('readAndRender',e);
+    set('fileStatus','⚠ Read error: '+e.message+' — retrying...');
+  }
+}
+
+// ── parse ─────────────────────────────────────────────────────────────
+function parseLogTs(ts){if(!ts)return null;const[hms,ms]=ts.split('.');const[h,m,s]=hms.split(':').map(Number);return h*3600+m*60+s+(ms?parseFloat('0.'+ms):0);}
+
+function parseLog(text){
+  const lines=text.split('\n');
+  const lpRe=/t=(\d+)s\s+d=(\d+)\s+HI=(\d+)\s+LO=(\d+)\s+hw=(\d+)\s+p=(\d+)/;
+  const rtcRe=/RTC Time!\s*(\d+):(\d+):(\d+)/;
+  const tsRe=/\[\d+ (\d{2}:\d{2}:\d{2}\.\d+)\]/;
+  const cclkRe=/\+CCLK:\s*"(\d+)\/(\d+)\/(\d+),(\d+):(\d+):(\d+)/;
+  let cclkDate='',cclkFound=false,cclkTime='';
+  for(const l of lines){
+    const m=cclkRe.exec(l);
+    if(m){
+      cclkDate=`20${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+      cclkTime=`${m[4].padStart(2,'0')}:${m[5].padStart(2,'0')}:${m[6].padStart(2,'0')}`;
+      cclkFound=true;break;
+    }
+  }
+  if(cclkFound && parseInt(cclkDate.slice(0,4))<2020) cclkFound=false;
+
+  const nowMs=Date.now();
+  const nowD=new Date();
+  const nowSec=nowD.getHours()*3600+nowD.getMinutes()*60+nowD.getSeconds();
+
+  // ── DATE & TIME ─────────────────────────────────────────────────────
+  // LOG TS = device RTC (< RTC Time! H:MM:SS >) from TeraTerm
+  // RTC (MYT) = nowMs - (lastLogTS_sec - thisLogTS_sec) * 1000
+  // Handles midnight wrap. No complex cumulative logic needed.
+
+  // Build deviceRtcMap: LP-WIN bucket lineIdx → device RTC seconds
+  const _devRtcMap=new Map();
+  {
+    const allRtcLines=[];
+    for(let i=0;i<lines.length;i++){
+      const rm=rtcRe.exec(lines[i]);
+      if(rm) allRtcLines.push({i, secs:parseInt(rm[1])*3600+parseInt(rm[2])*60+parseInt(rm[3])});
+    }
+    let rtcPtr=0;
+    for(let i=0;i<lines.length;i++){
+      if(!lpRe.test(lines[i])) continue;
+      while(rtcPtr<allRtcLines.length && allRtcLines[rtcPtr].i<=i) rtcPtr++;
+      if(rtcPtr<allRtcLines.length) _devRtcMap.set(i, allRtcLines[rtcPtr].secs);
+    }
+  }
+
+  // Get last device RTC (anchor = nowMs)
+  const _devRtcEntries=[..._devRtcMap.entries()].sort((a,b)=>a[0]-b[0]);
+  const _lastDevRtcSec = _devRtcEntries.length ? _devRtcEntries[_devRtcEntries.length-1][1] : null;
+
+  // Build secondsAgo for each bucket using cumulative diffs from last RTC backward
+  // Handles midnight wrap between consecutive RTC values
+  const _bucketCum=new Map(); // lineIdx → secondsAgo from last entry
+  if(_lastDevRtcSec!==null && _devRtcEntries.length>0){
+    _bucketCum.set(_devRtcEntries[_devRtcEntries.length-1][0], 0);
+    let runningAgo=0;
+    for(let k=_devRtcEntries.length-2;k>=0;k--){
+      let diff=_devRtcEntries[k+1][1]-_devRtcEntries[k][1];
+      if(diff<0) diff+=86400; // midnight wrap
+      runningAgo+=diff;
+      _bucketCum.set(_devRtcEntries[k][0], runningAgo);
+    }
+  }
+
+  // For buckets without device RTC, interpolate
+  const _allBucketLines=[];
+  for(let i=0;i<lines.length;i++){ if(lpRe.test(lines[i])) _allBucketLines.push(i); }
+  for(let k=0;k<_allBucketLines.length;k++){
+    const i=_allBucketLines[k];
+    if(_bucketCum.has(i)) continue;
+    let before=null,after=null;
+    for(let j=k-1;j>=0;j--){ if(_bucketCum.has(_allBucketLines[j])){before=_bucketCum.get(_allBucketLines[j]);break;} }
+    for(let j=k+1;j<_allBucketLines.length;j++){ if(_bucketCum.has(_allBucketLines[j])){after=_bucketCum.get(_allBucketLines[j]);break;} }
+    if(before!==null&&after!==null) _bucketCum.set(i,(before+after)/2);
+    else if(before!==null) _bucketCum.set(i,before+6);
+    else if(after!==null) _bucketCum.set(i,after+6);
+    else _bucketCum.set(i,0);
+  }
+
+  // lastLogTs for stale detection (use last TS line)
+  let lastLogTs=null;
+  for(let i=lines.length-1;i>=0;i--){ const m=tsRe.exec(lines[i]); if(m){lastLogTs=parseLogTs(m[1]);break;} }
+
+  // ── RTC ANCHOR: CCLK (Tera Term) is primary; fall back to PC clock ──
+  // When CCLK is valid, the LAST bucket anchors to cclkDate+cclkTime.
+  // All earlier buckets walk backward by cumulative RTC diffs.
+  let _anchorMs;
+  if(cclkFound && cclkDate && cclkTime){
+    _anchorMs = new Date(cclkDate+'T'+cclkTime).getTime();
+    const dsEl=document.getElementById('dateSource');
+    if(dsEl){
+      dsEl.textContent='✅ CCLK (Tera Term)';
+      dsEl.style.cssText='font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:4px;background:rgba(16,185,129,.12);color:var(--success);border:1px solid rgba(16,185,129,.25);';
+      dsEl.title='Date/time anchored to +CCLK from Tera Term: '+cclkDate+' '+cclkTime;
+    }
+  } else {
+    _anchorMs = nowMs;
+    const dsEl=document.getElementById('dateSource');
+    if(dsEl){
+      dsEl.textContent='⚠️ PC Clock fallback';
+      dsEl.style.cssText='font-size:10px;font-family:var(--mono);padding:1px 6px;border-radius:4px;background:rgba(245,158,11,.1);color:var(--warn);border:1px solid rgba(245,158,11,.2);';
+      dsEl.title='No valid +CCLK found in log — using PC clock as time reference';
+    }
+  }
+  console.log('EE-TIME: buckets='+_allBucketLines.length+' devRtc='+_devRtcMap.size+' anchor='+(cclkFound?'CCLK:'+cclkDate+'T'+cclkTime:'PC'));
+
+  const res=[];
+  let _dbgCount=0;
+  for(let i=0;i<lines.length;i++){
+    const lm=lpRe.exec(lines[i]);if(!lm)continue;
+    const tsm=tsRe.exec(lines[i]);const thisLogTs=tsm?parseLogTs(tsm[1]):null;
+    let actualTime='',rtcHour=-1,isWeekday=true,bucketDate=`${nowD.getFullYear()}-${String(nowD.getMonth()+1).padStart(2,'0')}-${String(nowD.getDate()).padStart(2,'0')}`;
+
+    // RTC = anchorMs - secondsAgo (CCLK anchor if available, else PC clock)
+    {
+      const secondsAgo = _bucketCum.has(i) ? _bucketCum.get(i) : 0;
+      const d = new Date(_anchorMs - secondsAgo*1000);
+      const h=d.getHours(), m2=d.getMinutes(), s=d.getSeconds();
+      actualTime=`${String(h).padStart(2,'0')}:${String(m2).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      rtcHour=h; isWeekday=d.getDay()>=1&&d.getDay()<=5;
+      bucketDate=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    // Read device RTC for LOG TS column from pre-built map
+    let deviceRtc='';
+    if(_devRtcMap.has(i)){
+      const s=_devRtcMap.get(i);
+      const rh=String(Math.floor(s/3600)).padStart(2,'0');
+      const rm2=String(Math.floor((s%3600)/60)).padStart(2,'0');
+      const rs=String(s%60).padStart(2,'0');
+      deviceRtc=`${rh}:${rm2}:${rs}`;
+    }
+
+    const isPeak=isWeekday&&rtcHour>=PEAK_START&&rtcHour<PEAK_END;
+    const wh=+lm[6]*(1000/PULSE_PER_KWH);
+    const kwh=wh/1000;
+    const genCost=calcCostRM(kwh,isPeak,'gen');
+    const touCost=calcCostRM(kwh,isPeak,'tou');
+    res.push({date:bucketDate,rtc:actualTime,rtcHour,log_ts:deviceRtc,isPeak,isWeekday,
+      t:+lm[1],d:+lm[2],HI:+lm[3],LO:+lm[4],hw:+lm[5],p:+lm[6],wh,kwh,genCost,touCost});
+  }
+  let runKwh=0;for(const r of res){runKwh+=r.kwh;r.kwhTotal=runKwh;}
+  return res;
+}
+
+// ── process ───────────────────────────────────────────────────────────
+// ── HISTORY ──────────────────────────────────────────────────────────
+// Keep merged data in memory only — localStorage caused QuotaExceededError
+// with large log files. Data persists as long as the tab is open.
+
+function saveHistory(){
+  // no-op: memory only, no localStorage write
+}
+
+function loadHistory(){
+  return [];
+}
+
+function mergeWithHistory(newData){
+  if(!newData||!newData.length) return allData;
+  // Fresh data has recalculated rtc/isPeak for all dates in current log file
+  // ALWAYS use fresh data for any date that appears in the new file
+  // Only keep allData entries for dates NOT covered by the new file
+  const freshDates=new Set(newData.map(r=>r.date).filter(Boolean));
+  const histOnly=allData.filter(r=>r.date&&!freshDates.has(r.date));
+  const merged=[...histOnly,...newData];
+  merged.sort((a,b)=>{
+    if(a.date!==b.date) return (a.date||'').localeCompare(b.date||'');
+    // Sort by rtc time string directly
+    return (a.rtc||'').localeCompare(b.rtc||'');
+  });
+  let run=0;merged.forEach(r=>{run+=r.kwh;r.kwhTotal=run;});
+  return merged;
+}
+
+let _lastFileSize=0;
+
+function processText(text){
+  try{
+    _lastText=text;
+    const fresh=parseLog(text);
+    // DEBUG: check if fresh has different rtc values
+    if(fresh.length>3){
+      console.log('EE-FRESH last3:', fresh.slice(-3).map(r=>({rtc:r.rtc,cum:'?'})).join('|'), 'first rtc:', fresh[0]?.rtc);
+    }
+    allData=mergeWithHistory(fresh);
+    // only save history when file has new buckets
+    if(fresh.length!==_lastFileSize){
+      _lastFileSize=fresh.length;
+      saveHistory();
+    }
+    set('bucketCount',allData.length);
+    const dates=[...new Set(allData.map(r=>r.date).filter(Boolean))];
+    set('logDate',dates[dates.length-1]||'—');
+    }catch(e){ logCrash('processText',e); }
+  try{ updateCharts(); }catch(e){ logCrash('updateCharts',e); }
+  try{ updateDeviceStatus(_lastText); }catch(e){ logCrash('updateDeviceStatus',e); }
+  try{ if(typeof applyFilter==='function') applyFilter(); }catch(e){ logCrash('applyFilter',e); }
+}
+
+function getViewData(){
+  if(timeFilterMin==='all') return allData;
+  if(typeof timeFilterMin==='string'&&timeFilterMin.startsWith('range:')){
+    const parts=timeFilterMin.split(':');
+    const from=parts[1], to=parts[2];
+    return allData.filter(r=>r.date&&r.date>=from&&r.date<=to);
+  }
+  if(typeof timeFilterMin==='string'&&timeFilterMin.startsWith('day:')){
+    const d=timeFilterMin.slice(4);
+    return allData.filter(r=>r.date===d);
+  }
+  if(typeof timeFilterMin==='string'&&timeFilterMin.startsWith('month:')){
+    const ym=timeFilterMin.slice(6);
+    return allData.filter(r=>r.date&&r.date.slice(0,7)===ym);
+  }
+  // filter by PC clock time (rtc) — use allData sorted by date+rtc, take last N minutes
+  const nowMs3=Date.now();
+  return allData.filter(r=>{
+    if(!r.rtc||!r.date) return true;
+    const d=new Date(r.date+'T'+r.rtc);
+    return nowMs3-d.getTime()<=timeFilterMin*60*1000;
+  });
+}
+
+
+
+// ── TNB TARIFF DATABASE (Jul 2025, Peninsular Malaysia) ────────────────
+// Energy + Capacity + Network = total per kWh
+// Phase notes: 1-phase 230V, 3-phase 415V — rates same, supply differs
+const TNB_TARIFFS = {
+  A: {
+    name: 'Tariff A — Domestic (Low Voltage)',
+    phase: { '1':'230V Single Phase', '3':'415V Three Phase' },
+    supply: 'Low Voltage, max 100A',
+    use: 'Residential use only',
+    general: {
+      label: 'General (Non-ToU)',
+      tiers: [
+        { limit: 1500, energy: 27.03, cap: 4.55, net: 12.85, total: 44.43 },
+        { limit: Infinity, energy: 37.03, cap: 4.55, net: 12.85, total: 54.43 }
+      ],
+      retail: 10.00, retailWaive: 600,
+      note: 'Retail waived ≤600 kWh/mth · EEI rebate up to 25 sen/kWh for ≤1000 kWh'
+    },
+    tou: {
+      label: 'ToU (Time-of-Use)',
+      tiers: [
+        { limit: 1500, peak: 28.52, offpeak: 24.43, cap: 4.55, net: 12.85, peakTotal: 45.92, offTotal: 41.83 },
+        { limit: Infinity, peak: 38.52, offpeak: 34.43, cap: 4.55, net: 12.85, peakTotal: 55.92, offTotal: 51.83 }
+      ],
+      retail: 10.00, retailWaive: 600,
+      peakHours: 'Mon–Fri 14:00–22:00',
+      note: 'Off-peak = 12am–2pm & 10pm–12am weekdays + all day weekends & PH · Smart meter required'
+    }
+  },
+  BD: {
+    name: 'Tariff B/D — Non-Domestic Low Voltage (Commercial)',
+    phase: { '1':'230V Single Phase (Tariff B)', '3':'415V Three Phase (Tariff D)' },
+    supply: 'Low Voltage, commercial',
+    use: 'Shops, offices, SMEs, schools',
+    general: {
+      label: 'General (Non-ToU)',
+      tiers: [
+        { limit: 1500, energy: 27.03, cap: 4.55, net: 12.85, total: 44.43 },
+        { limit: Infinity, energy: 37.03, cap: 4.55, net: 12.85, total: 54.43 }
+      ],
+      retail: 10.00, retailWaive: 600,
+      note: 'Tariff B = 1-phase · Tariff D = 3-phase · EEI rebate for ≤200 kWh/mth users'
+    },
+    tou: {
+      label: 'ToU (Time-of-Use)',
+      tiers: [
+        { limit: 1500, peak: 28.52, offpeak: 24.43, cap: 4.55, net: 12.85, peakTotal: 45.92, offTotal: 41.83 },
+        { limit: Infinity, peak: 38.52, offpeak: 34.43, cap: 4.55, net: 12.85, peakTotal: 55.92, offTotal: 51.83 }
+      ],
+      retail: 10.00, retailWaive: 600,
+      peakHours: 'Mon–Fri 14:00–22:00',
+      note: 'Available from Jul 2025 for all LV Non-Domestic · Smart meter required'
+    }
+  },
+  C1: {
+    name: 'Tariff C1 — Non-Domestic Medium Voltage (Commercial)',
+    phase: { '1':'N/A (MV is 3-phase only)', '3':'3-Phase 11kV / 33kV' },
+    supply: 'Medium Voltage 11kV–33kV',
+    use: 'Large commercial buildings, malls, hotels',
+    general: {
+      label: 'General (Non-ToU)',
+      tiers: [
+        { limit: Infinity, energy: 27.03, cap: 4.55, net: 7.34, total: 38.92 }
+      ],
+      retail: 10.00, retailWaive: 0,
+      note: 'MV Network charge lower than LV · Capacity + Network replace old MD charge'
+    },
+    tou: {
+      label: 'ToU (Time-of-Use)',
+      tiers: [
+        { limit: Infinity, peak: 28.52, offpeak: 24.43, cap: 4.55, net: 7.34, peakTotal: 40.41, offTotal: 36.32 }
+      ],
+      retail: 10.00, retailWaive: 0,
+      peakHours: 'Mon–Fri 14:00–22:00',
+      note: 'Off-peak Max Demand not charged under MV ToU · Demand charge applies'
+    }
+  },
+  C2: {
+    name: 'Tariff C2 — Non-Domestic Medium Voltage (Industrial)',
+    phase: { '1':'N/A (MV is 3-phase only)', '3':'3-Phase 11kV / 33kV' },
+    supply: 'Medium Voltage 11kV–33kV',
+    use: 'Factories, manufacturing, industrial facilities',
+    general: {
+      label: 'General (Non-ToU)',
+      tiers: [
+        { limit: Infinity, energy: 27.03, cap: 4.55, net: 7.34, total: 38.92 }
+      ],
+      retail: 10.00, retailWaive: 0,
+      note: 'Same rate as C1 · Differentiated by industrial use category'
+    },
+    tou: {
+      label: 'ToU (Time-of-Use)',
+      tiers: [
+        { limit: Infinity, peak: 28.52, offpeak: 24.43, cap: 4.55, net: 7.34, peakTotal: 40.41, offTotal: 36.32 }
+      ],
+      retail: 10.00, retailWaive: 0,
+      peakHours: 'Mon–Fri 14:00–22:00',
+      note: 'Significant savings for night-shift industrial operations on ToU'
+    }
+  },
+  E1: {
+    name: 'Tariff E1 — Industrial High Voltage (Peak Hours)',
+    phase: { '1':'N/A (HV is 3-phase only)', '3':'3-Phase 132kV and above' },
+    supply: 'High Voltage 132kV+',
+    use: 'Large industrial plants, refineries, data centres',
+    general: {
+      label: 'General (Non-ToU)',
+      tiers: [
+        { limit: Infinity, energy: 27.03, cap: 4.55, net: 3.69, total: 35.27 }
+      ],
+      retail: 10.00, retailWaive: 0,
+      note: 'HV Network charge significantly lower · Very high demand customers'
+    },
+    tou: {
+      label: 'ToU — Peak Hours Supply',
+      tiers: [
+        { limit: Infinity, peak: 28.52, offpeak: 24.43, cap: 4.55, net: 3.69, peakTotal: 36.76, offTotal: 32.67 }
+      ],
+      retail: 10.00, retailWaive: 0,
+      peakHours: 'Mon–Fri 14:00–22:00',
+      note: 'E1 = primarily peak hour operations · Off-peak demand not charged'
+    }
+  },
+  E2: {
+    name: 'Tariff E2 — Industrial High Voltage (Off-Peak Hours)',
+    phase: { '1':'N/A (HV is 3-phase only)', '3':'3-Phase 132kV and above' },
+    supply: 'High Voltage 132kV+',
+    use: 'Large plants that operate mainly at night/off-peak',
+    general: {
+      label: 'General (Non-ToU)',
+      tiers: [
+        { limit: Infinity, energy: 27.03, cap: 4.55, net: 3.69, total: 35.27 }
+      ],
+      retail: 10.00, retailWaive: 0,
+      note: 'E2 = primarily off-peak operations · Lower overall cost for night operations'
+    },
+    tou: {
+      label: 'ToU — Off-Peak Hours Supply',
+      tiers: [
+        { limit: Infinity, peak: 28.52, offpeak: 24.43, cap: 4.55, net: 3.69, peakTotal: 36.76, offTotal: 32.67 }
+      ],
+      retail: 10.00, retailWaive: 0,
+      peakHours: 'Mon–Fri 14:00–22:00',
+      note: 'Ideal for operations that can fully shift to off-peak · Max savings potential'
+    }
+  }
+};
+
+let selectedTariff = 'A', selectedPhase = '1';
+
+
+
+
+
+// init
+
+
+// ── charts ─────────────────────────────────────────────────────────────
+
+function updateDeviceStatus(text){
+  if(!text) return;
+  const lines=text.split('\n');
+  const tsRe2=/\[\d+ (\d{2}:\d{2}:\d{2})\.\d+\]/;
+  const rtcLineRe=/RTC Time!\s*(\d+):(\d+):(\d+)/;
+  const lineRtc=[];let curRtc='';
+  for(let i=0;i<lines.length;i++){
+    const rm=rtcLineRe.exec(lines[i]);
+    if(rm) curRtc=rm[1].padStart(2,'0')+':'+rm[2].padStart(2,'0')+':'+rm[3].padStart(2,'0');
+    lineRtc[i]=curRtc;
+  }
+  const getTime=(idx)=>{
+    if(lineRtc[idx]) return lineRtc[idx];
+    const m=tsRe2.exec(lines[idx]||'');
+    return m?m[1]:'—';
+  };
+  let modem='—',sim='—',txResult='—',battery='—',cclk='—';
+  let txOk=0,txFail=0;
+  const events=[];
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];const ts=getTime(i);
+    if(l.includes('Cold boot path')){modem='Cold boot';events.push({ts,type:'BOOT',msg:'Cold boot — modem powering up',col:'#f59e0b'});}
+    if(l.includes('PWRKEY PRESS')){modem='PWRKEY pressed';}
+    if(l.includes('Running autobaud')){modem='Baud lock...';events.push({ts,type:'MODEM',msg:'Autobaud/baud-lock running',col:'#5a6a7e'});}
+    if(l.includes('Autobaud/baud-lock failed')){modem='Baud lock FAIL';events.push({ts,type:'ERR',msg:'Autobaud failed — skip publish',col:'#ef4444'});}
+    if(l.match(/^[^[]*RDY\s*$/)){modem='RDY';events.push({ts,type:'MODEM',msg:'Modem RDY',col:'#00d4aa'});}
+    if(l.includes('+CFUN: 1')){modem='CFUN:1 (full)';}
+    if(l.includes('+CPIN: READY')){sim='READY';events.push({ts,type:'SIM',msg:'SIM: CPIN READY',col:'#00d4aa'});}
+    if(l.includes('+CPIN: NOT READY')||l.includes('+CPIN: NO SIM')){sim='NOT READY';events.push({ts,type:'SIM',msg:'SIM: NOT READY',col:'#ef4444'});}
+    if(l.includes('SMS Ready')){modem='SMS Ready';}
+    if(l.includes('+CREG: 1')||l.includes('+CREG: 5')){modem='Registered';events.push({ts,type:'NET',msg:'Network registered',col:'#00d4aa'});}
+    if(l.includes('+CGATT: 1')){modem='GPRS attached';events.push({ts,type:'NET',msg:'GPRS attached',col:'#00d4aa'});}
+    if(l.includes('[TX] result = OK')||l.includes('result = OK')){txResult='OK';txOk++;events.push({ts,type:'TX',msg:'Data published OK',col:'#00d4aa'});}
+    if(l.includes('[TX] result = FAIL')||l.includes('result = FAIL')){txResult='FAIL';txFail++;events.push({ts,type:'TX',msg:'Publish FAILED — skip cycle',col:'#ef4444'});}
+    if(l.includes('Cellular engine failed')){txResult='ENGINE FAIL';events.push({ts,type:'ERR',msg:'Cellular engine failed',col:'#ef4444'});}
+    const battM=l.match(/Battery\s*:\s*([\d.]+)/);
+    if(battM){battery=parseFloat(battM[1]).toFixed(2)+'V';}
+    if(l.includes('[TIME][CCLK]')){cclk='Querying...';}
+    if(l.includes('+CCLK:')){const cm=l.match(/\+CCLK: "(.+)"/);cclk=cm?cm[1].slice(0,14):'Synced';events.push({ts,type:'CLOCK',msg:'Clock synced: '+cclk,col:'#60a5fa'});}
+    if(l.includes('[PAYLOAD] V2')){events.push({ts,type:'DATA',msg:'Payload sent to server',col:'#a78bfa'});}
+    const bucketM=l.match(/\[BUCKET\] idx=(\d+)/);
+    if(bucketM&&parseInt(bucketM[1])%50===0){events.push({ts,type:'BUCKET',msg:'Bucket #'+bucketM[1],col:'#5a6a7e'});}
+  }
+  const colOk='#00d4aa',colWarn='#f59e0b',colErr='#ef4444',colMuted='#5a6a7e';
+  const setEl=(id,txt,col)=>{const e=document.getElementById(id);if(e){e.textContent=txt;e.style.color=col||colMuted;}};
+  setEl('dsp-modem',modem,modem.includes('FAIL')||modem.toLowerCase().includes('fail')?colErr:modem==='—'?colMuted:colOk);
+  setEl('dsp-sim',sim,sim==='READY'?colOk:sim.includes('NOT')?colErr:colMuted);
+  setEl('dsp-tx',txResult,txResult==='OK'?colOk:txResult.includes('FAIL')?colErr:colMuted);
+  setEl('dsp-batt',battery,colOk);
+  const cclkFailed=cclk==='—'||cclk==='Querying...';
+  setEl('dsp-cclk',cclkFailed?'No CCLK — PC clock':cclk,cclkFailed?colWarn:'#60a5fa');
+  setEl('dsp-cycles','OK:'+txOk+' / Fail:'+txFail,txFail>0?colWarn:colOk);
+  const now=new Date();
+  setEl('dsp-updated','Updated '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0'));
+  const el=document.getElementById('dsp-events');
+  if(el){
+    if(events.length){
+      const last=events.slice(-20).reverse();
+      el.innerHTML=last.map(e=>`<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+        <span style="color:#5a6a7e;font-size:10px;min-width:56px;font-family:var(--mono);">${e.ts||'—'}</span>
+        <span style="background:${e.col}22;color:${e.col};border-radius:3px;padding:0 5px;font-size:9px;min-width:44px;text-align:center;font-family:var(--mono);">${e.type}</span>
+        <span style="color:#9ca3af;font-size:10px;font-family:var(--mono);">${e.msg}</span>
+      </div>`).join('');
+    }
+    var noEvEl=document.getElementById('dsp-no-events');
+    if(noEvEl) noEvEl.style.display=events.length?'none':'block';
+    if(el&&!events.length) el.innerHTML='';
+  }
+  const pill=document.getElementById('cardDevicePill');
+  const dot=document.getElementById('cardDeviceDot');
+  const lbl=document.getElementById('cardDeviceLabel');
+  const cardDiv=document.getElementById('cardDeviceStatus');
+  if(pill&&dot&&lbl){
+    const isOk=txFail===0&&!modem.includes('FAIL')&&!modem.toLowerCase().includes('fail')&&sim!=='NOT READY';
+    if(isOk){
+      pill.style.cssText='display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:3px 9px;font-size:11px;font-family:var(--mono);background:rgba(0,212,170,.12);color:#00d4aa;border:1px solid rgba(0,212,170,.25);';
+      dot.style.cssText='width:7px;height:7px;border-radius:50%;background:#00d4aa;display:inline-block;animation:blink 1.3s ease-in-out infinite;';
+      lbl.textContent='Device OK';if(cardDiv)cardDiv.style.cursor='default';
+    }else{
+      pill.style.cssText='display:inline-flex;align-items:center;gap:5px;border-radius:5px;padding:3px 9px;font-size:11px;font-family:var(--mono);background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);cursor:pointer;';
+      dot.style.cssText='width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;animation:none;';
+      lbl.textContent='Device Fail — see Status ↗';if(cardDiv)cardDiv.style.cursor='pointer';
+    }
+  }
+  // Save for Device Status panel — detect CCLK from the log
+  const _cclkRe2=/\+CCLK:\s*"(\d+)\/(\d+)\/(\d+),(\d+):(\d+):(\d+)/;
+  let _sdCclkActive=false,_sdCclkDate='',_sdCclkTime='';
+  for(const l of lines){
+    const m2=_cclkRe2.exec(l);
+    if(m2){_sdCclkDate=`20${m2[1]}-${m2[2].padStart(2,'0')}-${m2[3].padStart(2,'0')}`;_sdCclkTime=`${m2[4].padStart(2,'0')}:${m2[5].padStart(2,'0')}:${m2[6].padStart(2,'0')}`;_sdCclkActive=parseInt(_sdCclkDate.slice(0,4))>=2020;break;}
+  }
+}
+
+function updateCharts(){
+  const d=getViewData();if(!d.length)return;
+  const threshold=calcUnusualThreshold(d);
+  const labels=d.map((r,i)=>r.rtc||String(i+1));
+  const whs=d.map(r=>r.wh);
+  const pulses=d.map(r=>r.p);
+  const his=d.map(r=>r.HI),los=d.map(r=>r.LO);
+  const eBg=d.map(r=>r.p>threshold?'rgba(239,68,68,0.8)':r.isPeak?'rgba(245,158,11,0.65)':'rgba(0,212,170,0.55)');
+  const showXLabels=typeof timeFilterMin==='string'&&timeFilterMin.startsWith('day:')||d.length<=300;
+  const xTickCfg=showXLabels?{display:true,color:'#5a6a7e',font:{size:9,family:'JetBrains Mono'},maxRotation:45,autoSkip:true,maxTicksLimit:24,callback:(_,idx)=>d[idx]?d[idx].rtc?.slice(0,5):''}:{display:false};
+  // Dynamic avg lines for energy chart
+  const avgWh=whs.length?whs.reduce((a,b)=>a+b,0)/whs.length:0;
+  const overallAvgData=new Array(whs.length).fill(+avgWh.toFixed(2));
+  const rollN=Math.min(30,Math.max(5,Math.floor(whs.length/10)));
+  const rollingAvgData=whs.map((_,i)=>{const w=whs.slice(Math.max(0,i-rollN+1),i+1);return +(w.reduce((a,b)=>a+b,0)/w.length).toFixed(2);});
+  const energyDs=[
+    {label:'Wh',data:whs,backgroundColor:eBg,borderRadius:2,order:3},
+    {type:'line',label:'Rolling avg',data:rollingAvgData,borderColor:'#f59e0b',borderWidth:1.5,pointRadius:0,fill:false,tension:0.3,order:1},
+    {type:'line',label:'Overall avg',data:overallAvgData,borderColor:'#ef4444',borderDash:[5,3],borderWidth:1.2,pointRadius:0,fill:false,order:2}
+  ];
+  if(energyChart){
+    energyChart.data.labels=labels;
+    energyChart.data.datasets[0].data=whs;energyChart.data.datasets[0].backgroundColor=eBg;
+    if(energyChart.data.datasets[1]) energyChart.data.datasets[1].data=rollingAvgData;
+    if(energyChart.data.datasets[2]) energyChart.data.datasets[2].data=overallAvgData;
+    energyChart.options.scales.x.ticks=xTickCfg;energyChart.update('none');
+  } else energyChart=new Chart(document.getElementById('energyChart'),{type:'bar',data:{labels,datasets:energyDs},options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{display:false},tooltip:{callbacks:{title:i=>`${d[i[0].dataIndex]?.date||''} ${d[i[0].dataIndex]?.rtc||''}`,label:i=>{if(i.datasetIndex===0)return[`Wh: ${i.raw.toFixed(0)}`,`Pulse: ${d[i.dataIndex]?.p}`,d[i.dataIndex]?.isPeak?'Peak (14–22)':'Off-peak'];return i.dataset.label+': '+i.raw+' Wh';}}}},scales:{x:{ticks:xTickCfg,grid:{color:'rgba(255,255,255,0.05)'}},y:{beginAtZero:true,ticks:{color:'#5a6a7e',font:{size:10,family:'JetBrains Mono'},callback:v=>v+'Wh'},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+  const pBg=pulses.map(p=>p>0?'rgba(16,185,129,0.7)':'rgba(16,185,129,0.12)');
+  if(mainChart){mainChart.data.labels=labels;mainChart.data.datasets[0].data=pulses;mainChart.data.datasets[0].backgroundColor=pBg;mainChart.data.datasets[1].data=his;mainChart.data.datasets[2].data=los;mainChart.options.scales.x.ticks=xTickCfg;mainChart.update('none');}
+  else mainChart=new Chart(document.getElementById('mainChart'),{type:'bar',data:{labels,datasets:[{type:'bar',label:'Pulse',data:pulses,backgroundColor:pBg,yAxisID:'yP',order:2,borderRadius:2},{type:'line',label:'HI',data:his,borderColor:'#ef4444',borderWidth:1.5,pointRadius:0,yAxisID:'yT',order:1,tension:.15,fill:false},{type:'line',label:'LO',data:los,borderColor:'#3b82f6',borderWidth:1.5,pointRadius:0,yAxisID:'yT',order:1,tension:.15,fill:false,borderDash:[4,3]}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{display:false}},scales:{x:{ticks:{display:false},grid:{color:'rgba(255,255,255,0.05)'}},yP:{position:'left',beginAtZero:true,ticks:{color:'#5a6a7e',font:{size:10,family:'JetBrains Mono'},stepSize:1},grid:{color:'rgba(255,255,255,0.05)'}},yT:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#5a6a7e',font:{size:10,family:'JetBrains Mono'}}}}}});
+  const hiCounts={};his.forEach(h=>hiCounts[h]=(hiCounts[h]||0)+1);const hk=Object.keys(hiCounts).sort((a,b)=>+a-+b);
+  const cols=['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899','#06b6d4'];
+  if(hiDistChart){hiDistChart.data.labels=hk;hiDistChart.data.datasets[0].data=hk.map(k=>hiCounts[k]);hiDistChart.update('none');}
+  else hiDistChart=new Chart(document.getElementById('hiDistChart'),{type:'bar',data:{labels:hk,datasets:[{label:'Count',data:hk.map(k=>hiCounts[k]),backgroundColor:hk.map((_,i)=>cols[i%cols.length]+'cc'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a6a7e',font:{size:10,family:'JetBrains Mono'}},grid:{color:'rgba(255,255,255,0.05)'}},y:{beginAtZero:true,ticks:{color:'#5a6a7e',font:{size:10,family:'JetBrains Mono'},stepSize:1},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+  updateKwhStackChart(d);
+}
+
+function updateKwhStackChart(d){
+  const pct=(curr,prev)=>{
+    if(!prev||prev<=0) return null;
+    return (curr-prev)/prev*100;
+  };
+  const pctSpan=(p,label)=>{
+    if(p===null) return '';
+    const sign=p>=0?'+':'';
+    const col=p>5?'#f87171':p<-5?'#10b981':'#5a6a7e';
+    const arrow=p>0.1?'\u25b2':p<-0.1?'\u25bc':'\u2014';
+    return ` <span style="font-size:10px;font-family:var(--mono);color:${col};">${arrow} ${sign}${p.toFixed(1)}% ${label}</span>`;
+  };
+  // amber warning — same colour for all insufficient/missing data messages
+  const warn=(msg)=>` <span style="font-size:10px;font-family:var(--mono);color:#f59e0b;">\u26a0 ${msg}</span>`;
+  const notEnough=(label)=>warn(`Insufficient ${label} data for comparison`);
+  const noData=(label)=>warn(`No ${label} data available to compare`);
+  const incomplete=(label)=>warn(`${label} — current period not yet complete`);
+
+  const mnN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dnN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const fmtDay=l=>{const dt=new Date(l+'T00:00:00');return dnN[dt.getDay()]+' '+String(dt.getDate()).padStart(2,'0')+'-'+mnN[dt.getMonth()];};
+  const sum=(arr,i)=>arr.map((p,j)=>p+(offData[j]||0)).reduce((s,v,j)=>i===undefined||j===i?s+v:s,0);
+  const totalKwh=arr=>arr.reduce((s,r)=>s+r.kwh,0);
+
+  let labels=[],peakData=[],offData=[],fmtLabels=[],titleStr='',pctHtml='';
+  const is15min=timeFilterMin===15;
+  const isHourView=timeFilterMin===60||timeFilterMin===120;
+  const isDayView=typeof timeFilterMin==='string'&&timeFilterMin.startsWith('day:');
+  const isWeek=timeFilterMin===10080;
+  const isMonth=timeFilterMin===43200;
+  const isYear=timeFilterMin===525600;
+
+  if(is15min){
+    // 15 MIN: individual buckets
+    labels=d.map((_,i)=>String(i));
+    peakData=d.map(r=>+r.kwh.toFixed(5));
+    offData=d.map(()=>0);
+    fmtLabels=d.map(r=>r.rtc?r.rtc.slice(0,5):'');
+    titleStr='kWh per Bucket \u2014 Last 15 min';
+
+  } else if(isHourView){
+    // 1 HOUR: bars per hour, % = prev full hour vs hour before (skip current)
+    const hMap={};
+    d.forEach(r=>{
+      if(!r.rtc)return;
+      const k=(r.date||'?')+' '+r.rtc.slice(0,2)+':00';
+      if(!hMap[k]) hMap[k]={peak:0,off:0};
+      if(r.isPeak) hMap[k].peak+=r.kwh; else hMap[k].off+=r.kwh;
+    });
+    const hk=Object.keys(hMap).sort();
+    labels=hk; peakData=hk.map(k=>+hMap[k].peak.toFixed(4)); offData=hk.map(k=>+hMap[k].off.toFixed(4));
+    fmtLabels=hk.map(k=>k.slice(11));
+    titleStr='kWh per Hour \u2014 Peak vs Off-Peak';
+    if(hk.length>=3){
+      const p2=peakData[hk.length-3]+offData[hk.length-3];
+      const p1=peakData[hk.length-2]+offData[hk.length-2];
+      pctHtml=pctSpan(pct(p1,p2),`(${fmtLabels[hk.length-2]} vs ${fmtLabels[hk.length-3]})`);
+    } else if(hk.length===2){
+      const p2=peakData[0]+offData[0], p1=peakData[1]+offData[1];
+      pctHtml=incomplete(fmtLabels[hk.length-1]+' vs '+fmtLabels[hk.length-2]);
+    }
+
+  } else if(isDayView||timeFilterMin===1440){
+    // 1 DAY: today bars (peak/off-peak coloured) + yesterday transparent overlay + avg line
+    const now=new Date();
+    const todayStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const yD=new Date(now-86400000);
+    const yestStr=`${yD.getFullYear()}-${String(yD.getMonth()+1).padStart(2,'0')}-${String(yD.getDate()).padStart(2,'0')}`;
+    const tDay=allData.filter(r=>r.date===todayStr);
+    const yDay=allData.filter(r=>r.date===yestStr);
+    const tKwh=totalKwh(tDay), yKwh=totalKwh(yDay);
+
+    // Build hour map for today and yesterday separately
+    const buildHourMap=(data)=>{
+      const m={};
+      data.forEach(r=>{
+        if(!r.rtc)return;
+        const h=r.rtc.slice(0,2);
+        if(!m[h]) m[h]={peak:0,off:0,isPeak:r.isPeak};
+        if(r.isPeak) m[h].peak+=r.kwh; else m[h].off+=r.kwh;
+        m[h].isPeak=m[h].peak>m[h].off; // majority determines hour colour
+      });
+      return m;
+    };
+    const todayHMap=buildHourMap(tDay);
+    const yestHMap=buildHourMap(yDay);
+    // All 24 hours
+    const allHours=Array.from(new Set([...Object.keys(todayHMap),...Object.keys(yestHMap)])).sort();
+    labels=allHours;
+    fmtLabels=allHours.map(h=>h+':00');
+    // Today data coloured by peak/off-peak
+    const todayTotals=allHours.map(h=>todayHMap[h]?+((todayHMap[h].peak+todayHMap[h].off).toFixed(4)):0);
+
+    // ── Graph coloring rule ────────────────────────────────────────────
+    // Today's bar color is driven by ACTUAL peak energy in that hour bucket,
+    // NOT by whether the hour slot falls in 14–22.
+    // If today has zero peak energy recorded → all today bars are green/teal.
+    // Yesterday's overlay retains its own actual coloring for reference.
+    //
+    // Rule:
+    //   Today hour has actual peak energy  → orange
+    //   Today hour is all off-peak energy  → green/teal
+    //   (Yesterday comparison no longer overrides today's actual color)
+    const todayHasPeak=tDay.some(r=>r.isPeak);
+    const yestHasPeak=yDay.some(r=>r.isPeak);
+
+    const todayColors=allHours.map(h=>{
+      if(!todayHMap[h]) return 'rgba(0,212,170,0.1)'; // no data → faint teal placeholder
+      // Color by actual peak energy in this hour, not by time slot
+      const hourHasPeak=todayHMap[h].peak>0;
+      return hourHasPeak?'rgba(245,158,11,0.85)':'rgba(0,212,170,0.65)';
+    });
+    // Yesterday data — transparent with border, colored by actual peak energy per hour
+    const yestTotals=allHours.map(h=>yestHMap[h]?+((yestHMap[h].peak+yestHMap[h].off).toFixed(4)):0);
+    const yestColors=allHours.map(h=>{
+      if(!yestHMap[h]) return 'rgba(0,0,0,0)';
+      const hourHasPeak=yestHMap[h].peak>0;
+      return hourHasPeak?'rgba(245,158,11,0.2)':'rgba(0,212,170,0.2)';
+    });
+    const yestBorder=allHours.map(h=>{
+      if(!yestHMap[h]) return 'rgba(0,0,0,0)';
+      const hourHasPeak=yestHMap[h].peak>0;
+      return hourHasPeak?'rgba(245,158,11,0.55)':'rgba(0,212,170,0.55)';
+    });
+    // Avg line for today
+    const todayAvg=todayTotals.filter(v=>v>0);
+    const avgVal=todayAvg.length?todayAvg.reduce((a,b)=>a+b,0)/todayAvg.length:0;
+    const avgLineData=new Array(allHours.length).fill(+avgVal.toFixed(4));
+
+    titleStr='kWh per Hour \u2014 Today vs Yesterday';
+
+    // % comparison
+    if(!yDay.length) pctHtml=noData('yesterday');
+    else if(yDay.length<tDay.length*0.5) pctHtml=notEnough('yesterday');
+    else pctHtml=pctSpan(pct(tKwh,yKwh),`vs yesterday (${yKwh.toFixed(3)} kWh)`);
+
+    // Special chart with 3 datasets: yesterday, today, avg line
+    const titleEl=document.querySelector('#kwhStackChart')?.closest('.energy-chart-card')?.querySelector('.card-title span');
+    if(titleEl) titleEl.innerHTML=titleStr+pctHtml;
+
+    const ds=[
+      {label:'Yesterday',data:yestTotals,backgroundColor:yestColors,borderColor:yestBorder,borderWidth:1,borderRadius:3,order:3},
+      {label:'Today',data:todayTotals,backgroundColor:todayColors,borderColor:todayColors,borderWidth:0,borderRadius:3,order:2},
+      {type:'line',label:'Today avg',data:avgLineData,borderColor:'#f59e0b',borderDash:[5,3],borderWidth:1.5,pointRadius:0,fill:false,order:1}
+    ];
+    if(kwhStackChart){
+      if(kwhStackChart.data.datasets.length!==3){kwhStackChart.destroy();kwhStackChart=null;}
+    }
+    if(kwhStackChart){
+      kwhStackChart.data.labels=fmtLabels;
+      kwhStackChart.data.datasets[0].data=yestTotals;
+      kwhStackChart.data.datasets[0].backgroundColor=yestColors;
+      kwhStackChart.data.datasets[0].borderColor=yestBorder;
+      kwhStackChart.data.datasets[1].data=todayTotals;
+      kwhStackChart.data.datasets[1].backgroundColor=todayColors;
+      kwhStackChart.data.datasets[2].data=avgLineData;
+      kwhStackChart.options.scales.x.stacked=false;
+      kwhStackChart.options.scales.y.stacked=false;
+      kwhStackChart.update('none');
+    } else {
+      kwhStackChart=new Chart(document.getElementById('kwhStackChart'),{
+        type:'bar',
+        data:{labels:fmtLabels,datasets:ds},
+        options:{responsive:true,maintainAspectRatio:false,animation:{duration:250},
+          plugins:{legend:{display:false},tooltip:{callbacks:{
+            title:i=>{const h=parseInt(allHours[i[0].dataIndex]);return (h>=PEAK_START&&h<PEAK_END?'\u26a1 Peak ':'○ Off-peak ')+fmtLabels[i[0].dataIndex];},
+            label:i=>`${i.dataset.label}: ${Number(i.raw).toFixed(3)} kWh`
+          }}},
+          scales:{
+            x:{stacked:false,ticks:{color:'#5a6a7e',font:{size:9,family:'JetBrains Mono'},maxRotation:0},grid:{color:'rgba(255,255,255,0.05)'}},
+            y:{stacked:false,beginAtZero:true,ticks:{color:'#5a6a7e',font:{size:9,family:'JetBrains Mono'},callback:v=>v.toFixed(2)},grid:{color:'rgba(255,255,255,0.05)'}}
+          }
+        }
+      });
+      attachZoom(()=>kwhStackChart);
+      const rb=document.getElementById('kwhStackReset');
+      if(rb) rb.onclick=()=>{kwhStackChart.options.scales.x.min=undefined;kwhStackChart.options.scales.x.max=undefined;kwhStackChart.update('none');};
+    }
+    return; // early return — chart already updated above
+
+  } else if(isWeek){
+    // 1 WEEK: 2 bars — prev week & this week, % this vs prev
+    const now=new Date();
+    const dayOfWeek=now.getDay(); // 0=Sun
+    const startThisWeek=new Date(now); startThisWeek.setDate(now.getDate()-dayOfWeek);
+    const startPrevWeek=new Date(startThisWeek); startPrevWeek.setDate(startThisWeek.getDate()-7);
+    const fmt=dt=>`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    const startThisStr=fmt(startThisWeek), startPrevStr=fmt(startPrevWeek);
+    const prevWkData=allData.filter(r=>r.date&&r.date>=startPrevStr&&r.date<startThisStr);
+    const thisWkData=allData.filter(r=>r.date&&r.date>=startThisStr);
+    const pKwh=totalKwh(prevWkData), tKwh=totalKwh(thisWkData);
+    const pPeak=prevWkData.filter(r=>r.isPeak).reduce((s,r)=>s+r.kwh,0);
+    const tPeak=thisWkData.filter(r=>r.isPeak).reduce((s,r)=>s+r.kwh,0);
+    labels=['prev-week','this-week'];
+    peakData=[+pPeak.toFixed(4),+tPeak.toFixed(4)];
+    offData=[+(pKwh-pPeak).toFixed(4),+(tKwh-tPeak).toFixed(4)];
+    fmtLabels=['Prev Week','This Week'];
+    titleStr='kWh per Week \u2014 This Week vs Prev Week';
+    if(!prevWkData.length) pctHtml=noData('previous week');
+    else if(prevWkData.length<thisWkData.length*0.3) pctHtml=notEnough('previous week');
+    else pctHtml=pctSpan(pct(tKwh,pKwh),`this week vs prev (${pKwh.toFixed(3)} kWh)`);
+
+  } else if(isMonth){
+    // 1 MONTH: 2 bars — prev month & this month, % this vs prev
+    const now=new Date();
+    const thisMonStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const pM=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const prevMonStr=`${pM.getFullYear()}-${String(pM.getMonth()+1).padStart(2,'0')}`;
+    const prevMonData=allData.filter(r=>r.date&&r.date.startsWith(prevMonStr));
+    const thisMonData=allData.filter(r=>r.date&&r.date.startsWith(thisMonStr));
+    const pKwh=totalKwh(prevMonData), tKwh=totalKwh(thisMonData);
+    const pPeak=prevMonData.filter(r=>r.isPeak).reduce((s,r)=>s+r.kwh,0);
+    const tPeak=thisMonData.filter(r=>r.isPeak).reduce((s,r)=>s+r.kwh,0);
+    const pLbl=mnN[pM.getMonth()]+' '+pM.getFullYear();
+    const tLbl=mnN[now.getMonth()]+' '+now.getFullYear();
+    labels=['prev-mon','this-mon'];
+    peakData=[+pPeak.toFixed(4),+tPeak.toFixed(4)];
+    offData=[+(pKwh-pPeak).toFixed(4),+(tKwh-tPeak).toFixed(4)];
+    fmtLabels=[pLbl,tLbl];
+    titleStr='kWh per Month \u2014 '+tLbl+' vs '+pLbl;
+    if(!prevMonData.length) pctHtml=noData(pLbl);
+    else if(prevMonData.length<thisMonData.length*0.3) pctHtml=notEnough(pLbl);
+    else pctHtml=pctSpan(pct(tKwh,pKwh),`${tLbl} vs ${pLbl} (${pKwh.toFixed(3)} kWh)`);
+
+  } else if(isYear){
+    // 1 YEAR: bars per YEAR, % latest year vs previous year
+    const yMap={};
+    d.forEach(r=>{
+      if(!r.date)return;
+      const k=r.date.slice(0,4);
+      if(!yMap[k]) yMap[k]={peak:0,off:0};
+      if(r.isPeak) yMap[k].peak+=r.kwh; else yMap[k].off+=r.kwh;
+    });
+    const yk=Object.keys(yMap).sort();
+    labels=yk; peakData=yk.map(k=>+yMap[k].peak.toFixed(4)); offData=yk.map(k=>+yMap[k].off.toFixed(4));
+    fmtLabels=yk.map(k=>k);
+    titleStr='kWh per Year';
+    if(yk.length>=2){
+      const p=peakData[yk.length-2]+offData[yk.length-2];
+      const c=peakData[yk.length-1]+offData[yk.length-1];
+      pctHtml=pctSpan(pct(c,p),`${fmtLabels[yk.length-1]} vs ${fmtLabels[yk.length-2]}`);
+    }
+
+  } else {
+    // ALL / RANGE: bars per day, % last day vs prev day
+    const dMap={};
+    d.forEach(r=>{
+      const k=r.date||'—';
+      if(!dMap[k]) dMap[k]={peak:0,off:0};
+      if(r.isPeak) dMap[k].peak+=r.kwh; else dMap[k].off+=r.kwh;
+    });
+    const dk=Object.keys(dMap).sort();
+    labels=dk; peakData=dk.map(k=>+dMap[k].peak.toFixed(4)); offData=dk.map(k=>+dMap[k].off.toFixed(4));
+    fmtLabels=dk.map(fmtDay);
+    titleStr='kWh per Day \u2014 Peak vs Off-Peak';
+    if(dk.length>=2){
+      const p=peakData[dk.length-2]+offData[dk.length-2];
+      const c=peakData[dk.length-1]+offData[dk.length-1];
+      pctHtml=pctSpan(pct(c,p),`vs ${fmtLabels[dk.length-2]}`);
+    }
+  }
+
+  const titleEl=document.querySelector('#kwhStackChart')?.closest('.energy-chart-card')?.querySelector('.card-title span');
+  if(titleEl) titleEl.innerHTML=titleStr+pctHtml;
+
+  const ds=is15min?[
+    {label:'kWh',data:peakData,backgroundColor:d.map(r=>r.isPeak?'rgba(245,158,11,0.75)':'rgba(0,212,170,0.6)'),borderRadius:2}
+  ]:[
+    {label:'Peak kWh',data:peakData,backgroundColor:'rgba(245,158,11,0.75)',borderRadius:2,stack:'kwh'},
+    {label:'Off-Peak kWh',data:offData,backgroundColor:'rgba(0,212,170,0.6)',borderRadius:2,stack:'kwh'}
+  ];
+
+  if(kwhStackChart){
+    // if dataset count changed (e.g. switching between 15min single-dataset and stacked)
+    // destroy and recreate to avoid Chart.js internal state mismatch
+    if(kwhStackChart.data.datasets.length !== ds.length){
+      kwhStackChart.destroy();
+      kwhStackChart=null;
+    }
+  }
+
+  if(kwhStackChart){
+    kwhStackChart.data.labels=fmtLabels;
+    ds.forEach((d,i)=>{ if(kwhStackChart.data.datasets[i]) Object.assign(kwhStackChart.data.datasets[i],d); });
+    kwhStackChart.options.scales.x.stacked=!is15min;
+    kwhStackChart.options.scales.y.stacked=!is15min;
+    kwhStackChart.update('none');
+  } else {
+    kwhStackChart=new Chart(document.getElementById('kwhStackChart'),{
+      type:'bar',
+      data:{labels:fmtLabels,datasets:ds},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:250},
+        plugins:{legend:{display:false},tooltip:{callbacks:{
+          title:i=>fmtLabels[i[0].dataIndex]||labels[i[0].dataIndex],
+          afterBody:i=>{
+            const idx=i[0].dataIndex;
+            if(is15min) return ['kWh: '+peakData[idx].toFixed(5)];
+            const tot=(peakData[idx]+offData[idx]).toFixed(4);
+            return ['Total: '+tot+' kWh'];
+          }
+        }}},
+        scales:{
+          x:{stacked:!is15min,ticks:{color:'#5a6a7e',font:{size:10,family:'JetBrains Mono'},maxRotation:45,autoSkip:true,maxTicksLimit:31},grid:{color:'rgba(255,255,255,0.05)'}},
+          y:{stacked:!is15min,beginAtZero:true,ticks:{color:'#5a6a7e',font:{size:10,family:'JetBrains Mono'},callback:v=>v+' kWh'},grid:{color:'rgba(255,255,255,0.05)'}}
+        }
+      }
+    });
+    attachZoom(()=>kwhStackChart);
+    const rb=document.getElementById('kwhStackReset');
+    if(rb) rb.onclick=()=>{kwhStackChart.options.scales.x.min=undefined;kwhStackChart.options.scales.x.max=undefined;kwhStackChart.update('none');};
+  }
+}
+
+// ── filters ────────────────────────────────────────────────────────────
+
+
+// filter to a specific calendar day from data
+
+// ── DATE RANGE FILTER ─────────────────────────────────────────────────
+let _allDates=[]; // sorted unique dates from data
+
+
+
+
+
+
+
+
+
+
+
+
+// ── AVG KWH — Dashboard Reporting Rules ──────────────────────────────
+// 15 min  → latestBucketKwh                              → "kWh (15 min) · N buckets"
+// 1 hour  → totalKwhPrevHour ÷ numBucketsPrevHour        → "kWh (1 hour avg) · Prev hour · N buckets"
+// 1 day   → totalKwh ÷ maxReceivedHoursOrBuckets         → "kWh/day avg · YYYY-MM-DD · Nh received · N buckets"
+// 1 week  → totalKwh ÷ maxReceivedDays (cap 7)           → "kWh/day avg · 1 week · Nd received · N buckets"
+// 1 month → totalKwh ÷ uniqueDays                        → "kWh/day avg · N days"
+// 1 year  → totalKwh ÷ weeks                             → "kWh/week avg · N weeks"
+// Range   → totalKwh ÷ uniqueDays                        → "kWh/day avg · N days"
+// All     → totalKwh ÷ uniqueDays                        → "kWh/day avg · N days"
+
+
+function applyDashPulseRate(radio){
+  let n;
+  if(radio.value==='custom'){
+    n=parseInt(document.getElementById('dashCustomPulse').value);
+    if(!n||n<=0) return;
+  } else {
+    n=parseInt(radio.value);
+  }
+  PULSE_PER_KWH=n;
+  const wh=(1000/n).toFixed(4).replace(/\.?0+$/,'');
+  document.getElementById('dashPulseStatus').textContent=`✓ 1 pulse = ${wh} Wh`;
+  ['1000','500','250','100','custom'].forEach(v=>{
+    const lbl=document.getElementById('pr-lbl-'+v);
+    if(!lbl)return;
+    const active=(v===radio.value);
+    lbl.style.borderColor=active?'rgba(0,212,170,.4)':'var(--border)';
+    lbl.style.background=active?'rgba(0,212,170,.08)':'';
+  });
+  document.getElementById('pulseRateLabel').textContent=`1 pulse = ${wh} Wh`;
+  if(_lastText) processText(_lastText);
+}
+
+let _lastText='';
+function togglePrintMenu(){
+  const m=document.getElementById('printMenu');
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+// close print menu if clicking outside
+document.addEventListener('click',e=>{
+  const wrap=document.getElementById('printMenuWrap');
+  if(wrap&&!wrap.contains(e.target))
+    document.getElementById('printMenu').style.display='none';
+});
+
+function savePDF(){
+  // use browser's print-to-PDF via print dialog with PDF destination hint
+  const style=document.createElement('style');
+  style.id='pdf-hint';
+  style.textContent='@page{size:A4 landscape;margin:10mm;}';
+  document.head.appendChild(style);
+  window.print();
+  setTimeout(()=>{const s=document.getElementById('pdf-hint');if(s)s.remove();},1000);
+}
+
+function shareEmail(){
+  savePDF();
+  setTimeout(()=>{
+    const subject=encodeURIComponent('CTS Rulez — Energy Eye Dashboard Report');
+    const body=encodeURIComponent('Hi,\n\nPlease find the Energy Eye dashboard report attached.\n\n'+buildShareText()+'\n\nNote: Please attach the PDF you just saved to this email.');
+    window.open('mailto:?subject='+subject+'&body='+body);
+  },500);
+}
+
+function shareWhatsApp(){
+  savePDF();
+  setTimeout(()=>{
+    const text=encodeURIComponent('📊 *CTS Rulez — Energy Eye Report*\n\n'+buildShareText()+'\n\n_PDF saved — please attach from your Downloads folder_');
+    showShareToast('PDF saved to Downloads. Now attach it in WhatsApp.');
+    window.open('https://web.whatsapp.com/','_blank');
+  },500);
+}
+
+function shareTeams(){
+  savePDF();
+  setTimeout(()=>{
+    showShareToast('PDF saved to Downloads. Now attach it in Teams.');
+    window.open('https://teams.microsoft.com/','_blank');
+  },500);
+}
+
+function copyReportText(){
+  const text=buildShareText();
+  navigator.clipboard.writeText(text).then(()=>{
+    showShareToast('Report text copied to clipboard. Paste into any app.');
+  }).catch(()=>{
+    // fallback
+    const ta=document.createElement('textarea');
+    ta.value=text;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    showShareToast('Report text copied to clipboard.');
+  });
+}
+
+function showShareToast(msg){
+  let t=document.getElementById('shareToast');
+  if(!t){
+    t=document.createElement('div');t.id='shareToast';
+    t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid rgba(0,212,170,.4);border-radius:8px;padding:10px 20px;font-size:12px;font-family:var(--mono);color:var(--accent);z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:opacity .3s;';
+    document.body.appendChild(t);
+  }
+  t.textContent='✓ '+msg;t.style.opacity='1';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>{t.style.opacity='0';},3500);
+}
+
+function buildShareText(){
+  const d=getViewData();
+  const totalKwh=(d.reduce((s,r)=>s+r.wh,0)/1000).toFixed(3);
+  const peakWh=d.filter(r=>r.isPeak).reduce((s,r)=>s+r.wh,0).toFixed(0);
+  const offWh=d.filter(r=>!r.isPeak).reduce((s,r)=>s+r.wh,0).toFixed(0);
+  const customer=siteInfo.name?'Customer: '+siteInfo.name+'\n':'';
+  const addr=siteInfo.address?'Address: '+siteInfo.address+'\n':'';
+  const acc=siteInfo.accNo?'TNB Acc: '+siteInfo.accNo+'\n':'';
+  const t=TNB_TARIFFS[selectedTariff];
+  const tier=t.general.tiers.length>1&&parseFloat(totalKwh)>t.general.tiers[0].limit?1:0;
+  const genCost=(parseFloat(totalKwh)*t.general.tiers[tier].total/100).toFixed(4);
+  const dates=[...new Set(d.map(r=>r.date).filter(Boolean))];
+  const dateRange=dates.length>1?dates[0]+' to '+dates[dates.length-1]:dates[0]||'—';
+
+  return `⚡ CTS Rulez — Energy Eye Report
+${'─'.repeat(32)}
+${customer}${addr}${acc}Date: ${dateRange}
+Pulse rate: ${PULSE_PER_KWH} p/kWh (1p = ${(1000/PULSE_PER_KWH).toFixed(2).replace(/\.?0+$/,'')} Wh)
+Tariff: ${selectedTariff} · ${selectedPhase}-Phase
+
+📊 Energy Summary
+Total energy: ${totalKwh} kWh
+Peak (${PEAK_START}:00–${PEAK_END}:00): ${peakWh} Wh
+Off-peak: ${offWh} Wh
+Buckets: ${d.length}
+
+💰 Cost Estimate (${selectedTariff} General)
+Estimated: RM ${genCost}
+Rate: ${t.general.tiers[tier].total} sen/kWh
+
+Generated by CTS Rulez Energy Eye Dashboard`;
+}
+
+
+function buildHelp(){
+  const pRate=PULSE_PER_KWH;
+  const wh=(1000/pRate).toFixed(4).replace(/\.?0+$/,'');
+  const tariff=TNB_TARIFFS[selectedTariff];
+  const tariffName=tariff?tariff.name:selectedTariff;
+  const phaseLabel=tariff?tariff.phase[selectedPhase]:selectedPhase;
+  const tier0=tariff?tariff.general.tiers[0]:null;
+  const tou0=tariff?tariff.tou.tiers[0]:null;
+  const peakH=PEAK_START+':00\u2013'+PEAK_END+':00';
+  const customer=siteInfo.name||'\u2014';
+  const hasData=allData.length>0;
+  const buckets=allData.length;
+  const dates=[...new Set(allData.map(r=>r.date).filter(Boolean))].sort();
+  const dateRange=dates.length>1?dates[0]+' to '+dates[dates.length-1]:dates[0]||'No data';
+
+  const sec=(t)=>`<div style="font-size:10px;font-weight:600;color:#60a5fa;font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);">${t}</div>`;
+  const card=(html)=>`<div style="padding:8px 10px;background:var(--surface2);border-radius:7px;border:0.5px solid var(--border);font-size:10px;color:var(--muted);font-family:var(--mono);line-height:1.8;">${html}</div>`;
+  const step=(n,t,d)=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--surface2);border-radius:7px;border:0.5px solid var(--border);"><span style="min-width:20px;height:20px;border-radius:50%;background:rgba(59,130,246,.15);color:#60a5fa;font-size:10px;font-family:var(--mono);display:flex;align-items:center;justify-content:center;">${n}</span><div><div style="font-size:12px;font-weight:500;color:var(--text);">${t}</div><div style="font-size:11px;color:var(--muted);">${d}</div></div></div>`;
+  const ac=(t)=>`<span style="color:var(--accent);">${t}</span>`;
+  const mb=`<div style="margin-bottom:14px;"></div>`;
+
+  document.getElementById('helpBody').innerHTML=`
+    ${sec('Current session')}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:14px;font-size:10px;font-family:var(--mono);">
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">Pulse rate<br>${ac(pRate+' p/kWh \u00b7 1p = '+wh+' Wh')}</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">Tariff<br>${ac(selectedTariff+' \u00b7 '+selectedPhase+'-Phase')}</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">Peak hours<br>${ac(peakH+' Mon\u2013Fri')}</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">Customer<br>${ac(customer)}</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">Buckets<br>${ac(hasData?buckets+' loaded':'No file')}</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">Date range<br>${ac(dateRange)}</div>
+    </div>
+
+    ${sec('Getting started')}
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+      ${step(1,'Open in Chrome or Edge','Double-click the .html file. Works fully offline.')}
+      ${step(2,'Click "Select teraterm.log"','Setup pop-up appears. Fill pulse rate, customer info and GPS, then Confirm & Load Data.')}
+      ${step(3,'Dashboard live','Auto-refreshes every '+intervalMs/1000+'s. Live indicator in header. Change refresh rate from dropdown.')}
+    </div>
+
+    ${sec('Setup pop-up')}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;">
+      ${card('<b style="color:var(--text);">1 Pulse rate</b><br>Currently '+ac(pRate+' p/kWh')+'. Options: 1000/500/250/100/Custom. Changeable anytime from status bar.')}
+      ${card('<b style="color:var(--text);">2 Customer info</b><br>Name, address, TNB acc no. Shown in site info card at top.')}
+      ${card('<b style="color:var(--text);">3 GPS</b><br>Lat/Lng or click Find Me. Creates Google Maps link in site card. Click Edit to reopen.')}
+    </div>
+
+    ${sec('Status bar')}
+    ${card('File \u00b7 Size \u00b7 Date \u00b7 Buckets \u00b7 Last read \u00b7 Pulse rate dropdown<br><b style="color:var(--text);">Date:</b> uses modem CCLK if found, otherwise PC clock anchored to log timestamps. Each bucket gets its own correct date \u2014 data spanning midnight is handled correctly.')}
+    ${mb}
+
+    ${sec('View filter')}
+    ${card('<b style="color:var(--text);">Quick:</b> All \u00b7 15 min \u00b7 1 hour \u00b7 1 day \u00b7 1 week \u00b7 1 month \u00b7 1 year<br><b style="color:var(--text);">\ud83d\udcc5 Range:</b> opens date picker with From/To date inputs. Populated from actual collected dates. '+ac('\u2715 Reset')+' returns to All.')}
+    ${mb}
+
+    ${sec('Metric cards (7)')}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:14px;font-size:10px;font-family:var(--mono);">
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">${ac('Total energy')} \u2014 kWh</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">${ac('Total pulses')} \u2014 raw count</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);color:#60a5fa;">Avg kWh (dynamic per filter)</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);color:#f59e0b;">Peak Wh (${peakH} weekdays)</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);color:#60a5fa;">Off-peak Wh</div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);color:#f59e0b;">Max pulse/bucket</div>
+      <div style="padding:6px 8px;background:rgba(239,68,68,.07);border-radius:6px;border:0.5px solid rgba(239,68,68,.25);grid-column:span 3;color:#f87171;">\u26a0 Unusual \u2014 above mean + 2\u00d7std dev threshold</div>
+    </div>
+
+    ${sec('Tariff calculator \u2014 '+selectedTariff)}
+    ${card(ac(selectedTariff)+' \u00b7 '+(tariffName||'')+'<br>Phase: '+ac(phaseLabel||selectedPhase)+'<br>'+(tier0?'General: '+ac(tier0.total+' sen/kWh')+' \u00b7 ToU Peak: '+ac(tou0.peakTotal+' sen/kWh')+' \u00b7 Off-Peak: '+ac(tou0.offTotal+' sen/kWh'):'\u2014')+'<br>Peak: '+ac(peakH+' Mon\u2013Fri')+' \u00b7 Weekends & PH = off-peak<br>Cost estimate from log data. Updates on tariff/phase/filter change.')}
+    ${mb}
+
+    ${sec('Unusual table')}
+    ${card('Last 15 min \u00b7 sorted highest pulse first \u00b7 max 5 rows visible, scrollable<br>Time (MYT) \u00b7 Log TS \u00b7 Pulse \u00b7 Wh \u00b7 Peak/Off-peak \u00b7 HI \u00b7 LO \u00b7 '+ac('Hide \u25b2')+' to collapse')}
+    ${mb}
+
+    ${sec('Charts')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+      ${card('<b style="color:var(--text);">Energy (Wh)</b><br>\ud83d\udfe2 Off-peak \u00b7 \ud83d\udfe1 Peak \u00b7 \ud83d\udd34 Unusual<br>Scroll=zoom \u00b7 Drag=pan \u00b7 Reset')}
+      ${card('<b style="color:var(--text);">Pulse + HI/LO</b><br>\ud83d\udfe2 Pulses \u00b7 \ud83d\udd34 HI \u00b7 \ud83d\udd35 LO (dashed)<br>Dual Y-axis \u00b7 Same zoom/pan/reset')}
+    </div>
+
+    ${sec('Energy & cost summary')}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+      ${card('<b style="color:var(--text);">Min data for forecast</b><br>1 day \u2192 100% of 1 day<br>1 week \u2192 5 days (75%)<br>1 month \u2192 3 weeks (75%)<br>1 year \u2192 full 1 month \u00d712')}
+      ${card('<b style="color:var(--text);">Banners</b><br><span style="color:var(--success);">\u2713 Green</span> \u2014 reliable estimate<br><span style="color:#60a5fa;">\u25cf Blue</span> \u2014 partial forecast (*)<br><span style="color:#f87171;">\u26a0 Red</span> \u2014 insufficient data<br>Updates when tariff or filter changes')}
+    </div>
+
+    ${sec('Status indicator (header)')}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:14px;font-size:10px;font-family:var(--mono);">
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">
+        <span style="color:var(--accent);">&#9679; LIVE</span><br>TeraTerm running. Dashboard polling every ${intervalMs/1000}s. Date &amp; time from PC clock.
+      </div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">
+        <span style="color:#f59e0b;">&#9679; STALE</span><br>No new data &gt;5 min. TeraTerm may have stopped or device disconnected.
+      </div>
+      <div style="padding:6px 8px;background:var(--surface2);border-radius:6px;border:0.5px solid var(--border);">
+        <span style="color:var(--muted);">&#9679; PAUSED</span><br>Polling manually stopped via Stop button. Click Resume to restart.
+      </div>
+    </div>
+
+    ${sec('Device status panel')}
+    ${card('<b style="color:var(--text);">Device Status</b> button \u2014 in the dashboard header. Click to open a full-height sidebar on the right.<br><br>\
+<b style="color:var(--text);">Status cards:</b> Modem state \u00b7 SIM (CPIN) \u00b7 Last TX result \u00b7 Battery voltage \u00b7 Clock sync \u00b7 TX cycle count (OK vs Fail)<br><br>\
+<b style="color:var(--text);">Recent Events log</b> \u2014 last 15 events newest first, colour coded:<br>\
+<span style="color:#00d4aa;">MODEM</span> RDY / registered \u00b7 <span style="color:#00d4aa;">SIM</span> CPIN READY \u00b7 <span style="color:#00d4aa;">TX</span> publish OK<br>\
+<span style="color:#ef4444;">ERR</span> baud lock / engine fail \u00b7 <span style="color:#ef4444;">TX</span> publish FAIL \u00b7 <span style="color:#f59e0b;">BOOT</span> cold boot<br>\
+<span style="color:#60a5fa;">CLOCK</span> CCLK sync \u00b7 <span style="color:#a78bfa;">DATA</span> payload sent<br><br>\
+<b style="color:var(--text);">\u23f8 Pause</b> \u2014 stops the device status log scan to reduce CPU load on large files. Charts and metrics continue updating normally. Click <b style="color:var(--text);">\u25b6 Resume</b> to restart.')}
+    ${mb}
+
+    ${sec('Bucket table')}
+    ${card('25 rows/page \u00b7 Search \u00b7 Filter: All/Pulse>0/No pulse/Unusual/Peak/Off-peak/HI/Date<br>Latest first toggle \u00b7 # \u00b7 Date \u00b7 RTC (MYT) \u00b7 Log TS \u00b7 HI \u00b7 LO \u00b7 hw \u00b7 d \u00b7 Pulse \u00b7 Wh \u00b7 kWh total \u00b7 Period \u00b7 Gen (RM) \u00b7 ToU (RM) \u00b7 Flag \u00b7 Dur')}
+    ${mb}
+
+    ${sec('Export')}
+    ${card('\ud83d\udda8 <b style="color:var(--text);">Save PDF</b> (printer icon in header) \u2014 opens print dialog, select Save as PDF<br>\u2139 <b style="color:var(--text);">? Help</b> \u2192 Print \u2014 prints this guide \u00b7 Download \u2014 saves guide as .html')}
+    ${mb}
+
+    ${sec('Tips')}
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;">
+      ${card('\u2713 Leave running \u2014 TeraTerm logs and dashboard updates every '+intervalMs/1000+'s automatically')}
+      ${card('\u2713 Change pulse rate anytime from status bar dropdown \u2014 instant recalculation of all values')}
+      ${card('\u2713 Date fix: without CCLK, each bucket gets its correct PC-clock date \u2014 midnight-spanning data works')}
+      ${card('\u2713 History: loading new files merges with stored data. Range picker shows all historical dates.')}
+      ${card('\u2713 Collect 1 full month for reliable 1-year forecast (\u00d712 projection)')}
+    </div>
+  `;
+}
+
+
+
+function setPulseRate(val){
+  if(val==='custom'){
+    const input=prompt('Enter pulses per kWh (e.g. 1000, 500, 250, 100):');
+    const n=parseInt(input);
+    if(!n||n<=0){document.getElementById('pulseRateSel').value='1000';return;}
+    PULSE_PER_KWH=n;
+    const sel=document.getElementById('pulseRateSel');
+    let opt=sel.querySelector('[value="custom_val"]');
+    if(!opt){opt=document.createElement('option');opt.value='custom_val';sel.insertBefore(opt,sel.lastChild);}
+    opt.textContent=`${n} pulses = 1 kWh`;
+    sel.value='custom_val';
+  } else {
+    PULSE_PER_KWH=parseInt(val);
+  }
+  const wh=(1000/PULSE_PER_KWH).toFixed(4).replace(/\.?0+$/,'');
+  document.getElementById('pulseRateLabel').textContent=`1 pulse = ${wh} Wh`;
+  if(allData.length) processText(_lastText);
+}
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function fmtBytes(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(2)+'MB';}
+
+// ── MANUAL ZOOM / PAN ─────────────────────────────────────────────────
+function attachZoom(getChart){
+  // wait until chart is created then bind
+  const tryBind=()=>{
+    const chart=getChart();
+    if(!chart){setTimeout(tryBind,300);return;}
+    const canvas=chart.canvas;
+    canvas.style.cursor='crosshair';
+    let zoomMin=0,zoomMax=1; // 0–1 fractions of total data
+    let isPanning=false,panStartX=0,panZoomMin=0,panZoomMax=1;
+
+    function applyZoom(){
+      const n=chart.data.labels.length;
+      const min=Math.max(0,Math.floor(zoomMin*n));
+      const max=Math.min(n-1,Math.ceil(zoomMax*n));
+      chart.options.scales.x.min=min;
+      chart.options.scales.x.max=max;
+      chart.update('none');
+    }
+
+    function resetZoom(){
+      zoomMin=0;zoomMax=1;
+      chart.options.scales.x.min=undefined;
+      chart.options.scales.x.max=undefined;
+      chart.update('none');
+    }
+    // attach reset to button in same card
+    const card=canvas.closest('.energy-chart-card,.chart-card');
+    if(card){
+      const btn=card.querySelector('button');
+      if(btn) btn.onclick=resetZoom;
+    }
+
+    // scroll = zoom
+    canvas.addEventListener('wheel',e=>{
+      e.preventDefault();e.stopPropagation();
+      const rect=canvas.getBoundingClientRect();
+      const xFrac=(e.clientX-rect.left)/rect.width;
+      const span=zoomMax-zoomMin;
+      const factor=e.deltaY>0?1.15:0.87; // out / in
+      const newSpan=Math.min(1,Math.max(0.02,span*factor));
+      const center=zoomMin+xFrac*span;
+      zoomMin=Math.max(0,center-xFrac*newSpan);
+      zoomMax=zoomMin+newSpan;
+      if(zoomMax>1){zoomMax=1;zoomMin=Math.max(0,1-newSpan);}
+      applyZoom();
+    },{passive:false});
+
+    // drag = pan
+    canvas.addEventListener('mousedown',e=>{
+      isPanning=true;
+      panStartX=e.clientX;
+      panZoomMin=zoomMin;panZoomMax=zoomMax;
+      canvas.style.cursor='grabbing';
+    });
+    window.addEventListener('mousemove',e=>{
+      if(!isPanning)return;
+      const rect=canvas.getBoundingClientRect();
+      const span=panZoomMax-panZoomMin;
+      const dx=(panStartX-e.clientX)/rect.width*span;
+      let newMin=panZoomMin+dx,newMax=panZoomMax+dx;
+      if(newMin<0){newMin=0;newMax=span;}
+      if(newMax>1){newMax=1;newMin=1-span;}
+      zoomMin=newMin;zoomMax=newMax;
+      applyZoom();
+    });
+    window.addEventListener('mouseup',()=>{
+      if(isPanning){isPanning=false;canvas.style.cursor='crosshair';}
+    });
+  };
+  tryBind();
+}
+
+window.addEventListener('load',()=>{
+  attachZoom(()=>energyChart);
+  attachZoom(()=>mainChart);
+});
+
+
+// Single wrap: pause guard (state is saved inside updateDeviceStatus itself)
+
+// ── VERSION CONTROL (hold / reverse) ────────────────────────────────────
+let _savedVersion=null;
+function versionControl(cmd){
+  const c=(cmd||'').trim().toLowerCase();
+  if(c==='hold'){
+    _savedVersion=document.documentElement.outerHTML;
+    const ts=new Date().toLocaleTimeString();
+    alert('✅ Version saved at '+ts+'\nType "reverse" to restore.');
+    console.log('%c[VC] Version held at '+ts,'color:#00d4aa;font-weight:bold;');
+  } else if(c==='reverse'){
+    if(!_savedVersion){alert('⚠️ No saved version found. Run hold first.');return;}
+    const blob=new Blob([_savedVersion],{type:'text/html'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='index.html';a.click();URL.revokeObjectURL(a.href);
+    alert('⬇️ Saved version downloaded as index.html.\nReplace the current file to revert.');
+  } else {
+    console.warn('[VC] Unknown command: '+cmd+'. Use hold or reverse.');
+  }
+}
+window.hold=()=>versionControl('hold');
+window.reverse=()=>versionControl('reverse');
+
+// ── INLINE SETUP ─────────────────────────────────────────────────────────
+let siteInfo={name:'',address:'',accNo:'',lat:'',lng:''};
+
+function toggleSetupPanel(){
+  var body=document.getElementById('setupBody');
+  var btn=document.getElementById('setupCollapseBtn');
+  if(!body||!btn) return;
+  var collapsed=body.style.display==='none';
+  body.style.display=collapsed?'block':'none';
+  btn.textContent=collapsed?'\u25b2 Collapse':'\u25bc Expand';
+}
+
+function applySetup(){
+  var sel=document.querySelector('input[name="setupPulse"]:checked');
+  if(sel){
+    PULSE_PER_KWH=parseInt(sel.value);
+    var wh=(1000/PULSE_PER_KWH).toFixed(4).replace(/\.?0+$/,'');
+    document.getElementById('pulseRateLabel').textContent='1 pulse = '+wh+' Wh';
+    var psel=document.getElementById('pulseRateSel');
+    if(psel&&[1000,500,250,100].indexOf(PULSE_PER_KWH)!==-1) psel.value=String(PULSE_PER_KWH);
+    ['1000','500','250','100'].forEach(function(v){
+      var lbl=document.getElementById('pr-lbl-'+v);
+      if(lbl){lbl.style.borderColor=v===String(PULSE_PER_KWH)?'rgba(0,212,170,.4)':'var(--border)';lbl.style.background=v===String(PULSE_PER_KWH)?'rgba(0,212,170,.08)':'';}
+    });
+  }
+  siteInfo.name=(document.getElementById('setupCustomerName')||{value:''}).value.trim();
+  siteInfo.accNo=(document.getElementById('setupAccNo')||{value:''}).value.trim();
+  siteInfo.address=(document.getElementById('setupAddress')||{value:''}).value.trim();
+  var wh2=(1000/PULSE_PER_KWH).toFixed(4).replace(/\.?0+$/,'');
+  if(siteInfo.name) set('logoSub',siteInfo.name+' \u00b7 1 pulse = '+wh2+' Wh \u00b7 TNB tariff July 2025');
+  set('cardName',siteInfo.name||'\u2014');
+  set('cardAddress',siteInfo.address||'\u2014');
+  set('cardAccNo',siteInfo.accNo||'\u2014');
+  set('cardPulse',PULSE_PER_KWH+' pulses = 1 kWh (1 pulse = '+wh2+' Wh)');
+  var card=document.getElementById('siteInfoCard');
+  if(card) card.style.display=(siteInfo.name||siteInfo.address||siteInfo.accNo)?'block':'none';
+  if(allData.length) processText(_lastText);
+  var saved=document.getElementById('setupApplied');
+  if(saved){saved.style.display='inline';setTimeout(function(){saved.style.display='none';},2000);}
+  toggleSetupPanel();
+}
+
+document.addEventListener('change',function(e){
+  if(e.target.name!=='setupPulse') return;
+  ['1000','500','250','100'].forEach(function(v){
+    var lbl=document.getElementById('pr-lbl-'+v);
+    if(lbl){lbl.style.borderColor=v===e.target.value?'rgba(0,212,170,.4)':'var(--border)';lbl.style.background=v===e.target.value?'rgba(0,212,170,.08)':'';}
+  });
+});
+
+
+// ── STOP / RESUME POLLING ─────────────────────────────────────────────────
+function togglePolling(){
+  var btn=document.getElementById('stopResumeBtn');
+  if(intervalId){
+    clearInterval(intervalId);
+    intervalId=null;
+    if(btn){btn.textContent='▶ Resume';btn.style.borderColor='rgba(0,212,170,.4)';btn.style.color='var(--accent)';}
+    setLive('PAUSED',false);
+    set('fileStatus','Paused');
+  } else {
+    startPolling();
+    if(btn){btn.textContent='⏹ Stop';btn.style.borderColor='rgba(239,68,68,.4)';btn.style.color='#f87171';}
+    setLive('LIVE',true);
+  }
+}
+
+// ── BUCKET DETAIL TABLE ───────────────────────────────────────────────────
+var PAGE_ROWS=25;
+var filtered=[];
+var tablePageNum=0;
+
+function applyFilter(){
+  var q=(document.getElementById('filterInput')||{value:''}).value.toLowerCase();
+  var pf=(document.getElementById('pulseFilter')||{value:'all'}).value;
+  var hf=(document.getElementById('hiFilter')||{value:'all'}).value;
+  var df=(document.getElementById('dateFilter')||{value:'all'}).value;
+  var rev=document.getElementById('latestFirst') ? document.getElementById('latestFirst').checked : true;
+  var threshold=calcUnusualThreshold(allData);
+  filtered=allData.filter(function(r){
+    var mQ=!q||String(r.date||'').includes(q)||String(r.rtc||'').includes(q)||String(r.HI).includes(q)||String(r.p).includes(q);
+    var mP=pf==='all'||(pf==='active'&&r.p>0)||(pf==='zero'&&r.p===0)||(pf==='unusual'&&r.p>threshold)||(pf==='peak'&&r.isPeak)||(pf==='offpeak'&&!r.isPeak);
+    var mH=hf==='all'||String(r.HI)===hf;
+    var mD=df==='all'||r.date===df;
+    return mQ&&mP&&mH&&mD;
+  });
+  if(rev) filtered=filtered.slice().reverse();
+  tablePageNum=0;
+  // Refresh HI dropdown
+  var hiVals=[...new Set(allData.map(function(r){return r.HI;}))].sort(function(a,b){return a-b;});
+  var hiSel=document.getElementById('hiFilter');
+  if(hiSel){var c=hiSel.value;hiSel.innerHTML='<option value="all">All HI</option>'+hiVals.map(function(v){return '<option value="'+v+'"'+(c==v?' selected':'')+'>'+v+'</option>';}).join('');}
+  // Refresh date dropdown
+  var dates=[...new Set(allData.map(function(r){return r.date;}).filter(Boolean))];
+  var dSel=document.getElementById('dateFilter');
+  if(dSel){var c2=dSel.value;dSel.innerHTML='<option value="all">All dates</option>'+dates.map(function(v){return '<option value="'+v+'"'+(c2===v?' selected':'')+'>'+v+'</option>';}).join('');}
+  renderTable();
+}
+
+function renderTable(){
+  var threshold=calcUnusualThreshold(allData);
+  var rev=document.getElementById('latestFirst') ? document.getElementById('latestFirst').checked : true;
+  var slice=filtered.slice(tablePageNum*PAGE_ROWS,(tablePageNum+1)*PAGE_ROWS);
+  var tbody=document.getElementById('tableBody');
+  if(!tbody) return;
+  tbody.innerHTML=slice.map(function(r,si){
+    var origIdx=allData.indexOf(r);
+    var dH=r.date?'<span class="pill p-date">'+r.date+'</span>':'<span class="pill p-none">—</span>';
+    var rH=r.rtc?'<span class="pill p-rtc">'+r.rtc+'</span>':'<span class="pill p-none">—</span>';
+    var lH=r.log_ts?'<span style="color:var(--accent);font-size:10px;font-family:var(--mono);">'+r.log_ts+'</span>':'<span style="color:var(--muted);font-size:10px;">—</span>';
+    var pC=r.p>threshold?'p-unusual':r.p>0?'p-pulse':'p-zero';
+    var perH=r.isPeak?'<span class="pill p-peak">Peak</span>':'<span class="pill p-off">Off</span>';
+    var flagH=r.p>threshold?'<span class="pill p-unusual">⚠</span>':'<span style="color:var(--muted);font-size:10px;">—</span>';
+    var flash=(si<3&&tablePageNum===0&&rev)?'flash':'';
+    var unusual=r.p>threshold?'unusual-row':'';
+    return '<tr class="'+flash+' '+unusual+'">'
+      +'<td style="color:var(--muted);">'+(origIdx+1)+'</td>'
+      +'<td>'+dH+'</td><td>'+rH+'</td><td>'+lH+'</td>'
+      +'<td><span class="pill p-hi">'+r.HI+'</span></td>'
+      +'<td><span class="pill p-lo">'+r.LO+'</span></td>'
+      +'<td style="color:var(--muted);">'+r.hw+'</td>'
+      +'<td style="color:'+(r.d>0?'var(--warn)':'var(--muted)')+';">'+r.d+'</td>'
+      +'<td><span class="pill '+pC+'">'+r.p+'</span></td>'
+      +'<td><span class="pill p-kwh">'+r.wh.toFixed(0)+'Wh</span></td>'
+      +'<td style="color:var(--muted);font-size:10px;">'+r.kwhTotal.toFixed(4)+'</td>'
+      +'<td>'+perH+'</td>'
+      +'<td>'+flagH+'</td>'
+      +'<td style="color:var(--muted);">'+r.t+'s</td>'
+      +'</tr>';
+  }).join('');
+  var total=Math.ceil(filtered.length/PAGE_ROWS);
+  set('rowCount',filtered.length+' rows');
+  var pg=document.getElementById('pagination');
+  if(pg){
+    pg.innerHTML='';
+    if(total<=1) return;
+    var mk=function(lbl,t,active){
+      var b=document.createElement('button');
+      b.className='pg-btn'+(active?' active':'');
+      b.textContent=lbl;
+      b.onclick=function(){tablePageNum=t;renderTable();};
+      pg.appendChild(b);
+    };
+    if(tablePageNum>0) mk('‹',tablePageNum-1,false);
+    var s=Math.max(0,tablePageNum-2),e=Math.min(total,s+5);
+    for(var i=s;i<e;i++) mk(i+1,i,i===tablePageNum);
+    if(tablePageNum<total-1) mk('›',tablePageNum+1,false);
+  }
+}
+</script>
